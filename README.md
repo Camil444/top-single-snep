@@ -1,5 +1,7 @@
 # SNEP Top 50 Analytics & Dashboard
 
+![Dashboard Preview](artiste_picture/dashboard_example.png)
+
 A full-stack data project that scrapes weekly French music charts (SNEP), enriches data via Genius API, stores it in PostgreSQL, and visualizes trends in a modern Next.js dashboard.
 
 ## 🏗 Architecture
