@@ -1,0 +1,6 @@
+pandas
+requests
+beautifulsoup4
+lyricsgenius
+psycopg2-binary
+numpy
