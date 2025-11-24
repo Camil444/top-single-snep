@@ -15,33 +15,58 @@ A full-stack data project that scrapes weekly French music charts (SNEP), enrich
 ### Prerequisites
 
 - Docker & Docker Compose
-- Genius API Access Token
-- `requirements.txt` (optional, for local development without Docker)
+- Git
 
 ### Installation
 
 1.  **Clone the repository**
 
     ```bash
-    git clone <repo-url>
-    cd top_50_snep
+    git clone https://github.com/Camil444/top-single-snep.git
+    cd top-single-snep
     ```
 
-2.  **Start the stack**
+2.  **Configure Environment Variables**
+
+    Create a `.env` file in the root directory and add your configuration:
+
+    ```env
+    # Database Configuration
+    POSTGRES_USER=db_user
+    POSTGRES_PASSWORD=password
+    POSTGRES_DB=db
+    DB_HOST=db
+    DB_PORT=5432
+
+    # Genius API Token (Get one at https://genius.com/api-clients)
+    GENIUS_ACCESS_TOKEN=your_genius_access_token_here
+    ```
+
+3.  **Start the stack**
 
     ```bash
-    docker-compose up -d
+    docker-compose up -d --build
     ```
 
-3.  **Access Services**
-    - **Dashboard**: [http://localhost:3000](http://localhost:3000)
-    - **Airflow**: [http://localhost:8080](http://localhost:8080) (User/Pass: `admin`/`admin` - _check logs if different_)
+4.  **Create Airflow Admin User**
 
-### Manual Data Update (Airflow)
+    ```bash
+    docker-compose exec af airflow users create \
+        --username admin \
+        --firstname Admin \
+        --lastname User \
+        --role Admin \
+        --email admin@example.com \
+        --password admin
+    ```
 
-1.  Go to Airflow UI.
-2.  Trigger the `snep_update_weekly` DAG.
-3.  The pipeline will scrape missing weeks and update the DB.
+5.  **Initialize Data**
+
+    - Go to **http://localhost:8080** (Login: `admin` / `admin`).
+    - Enable and Trigger the `snep_update_weekly` DAG to fetch initial data.
+
+6.  **Access Dashboard**
+    - Open **http://localhost:3000** to view the analytics.
 
 ## 📂 Project Structure
 

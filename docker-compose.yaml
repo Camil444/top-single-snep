@@ -23,6 +23,10 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow_password@db:5432/airflow_db
       DB_HOST: db
       GENIUS_ACCESS_TOKEN: ${GENIUS_ACCESS_TOKEN}
+      # Load other env vars if needed
+      POSTGRES_USER: ${POSTGRES_USER:-db_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-db_password}
+      POSTGRES_DB: ${POSTGRES_DB:-db}
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./:/opt/airflow/project
