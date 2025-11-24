@@ -88,6 +88,9 @@ def parse_artists(artiste_string):
     # Remplacer les différents séparateurs par un séparateur uniforme
     # On utilise |SEPARATOR| comme délimiteur temporaire unique
     separators = [
+        (' FT. ', '|SEPARATOR|')
+        (' FT ', '|SEPARATOR|'),
+        (' ft ', '|SEPARATOR|'),
         ('FEAT.', '|SEPARATOR|'),
         ('FEAT', '|SEPARATOR|'),
         ('feat.', '|SEPARATOR|'),
