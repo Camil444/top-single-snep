@@ -23,6 +23,10 @@ airflow/logs/
 airflow/*.pid
 airflow/*.err
 airflow/*.out
+*.log
+
+# Postgres Data
+postgres/data_db/
 
 # Data cache (optional)
 song_cache_v2.json
