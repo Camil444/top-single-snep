@@ -25,6 +25,10 @@ export async function GET(request: Request) {
         UNION ALL
         SELECT UPPER(TRIM(producer_2)) as name, titre, artiste, annee, semaine, classement as rang FROM all_data WHERE producer_2 IS NOT NULL AND TRIM(producer_2) <> ''
       `;
+    } else if (type === "editeur") {
+      entityQuery = `
+        SELECT UPPER(TRIM(editeur)) as name, titre, artiste, annee, semaine, classement as rang FROM all_data WHERE editeur IS NOT NULL AND TRIM(editeur) <> ''
+      `;
     } else {
       entityQuery = `
         SELECT UPPER(TRIM(artiste)) as name, titre, artiste, annee, semaine, classement as rang FROM all_data WHERE artiste IS NOT NULL AND TRIM(artiste) <> ''

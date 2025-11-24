@@ -27,6 +27,8 @@ export async function GET(request: Request) {
     let whereClause = "";
     if (type === "producer") {
       whereClause = `(UPPER(producer_1) = UPPER($1) OR UPPER(producer_2) = UPPER($1))`;
+    } else if (type === "editeur") {
+      whereClause = `(UPPER(editeur) = UPPER($1))`;
     } else {
       whereClause = `(UPPER(artiste) = UPPER($1) OR UPPER(artiste_2) = UPPER($1) OR UPPER(artiste_3) = UPPER($1) OR UPPER(artiste_4) = UPPER($1))`;
     }

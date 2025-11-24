@@ -10,6 +10,8 @@ import {
   Moon,
   Sun,
   X,
+  Building2,
+  Search,
 } from "lucide-react";
 
 interface Stat {
@@ -338,14 +340,46 @@ function Podium({
 }
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<"producer" | "artist" | "genre">(
-    "producer"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "producer" | "artist" | "genre" | "editeur"
+  >("producer");
   const [stats, setStats] = useState<Stat[]>([]);
   const [genres, setGenres] = useState<{ genre: string; count: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchSelection, setIsSearchSelection] = useState(false);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.length >= 2) {
+        fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&type=${activeTab}`)
+          .then((res) => res.json())
+          .then((data) => {
+            setSuggestions(data);
+            setShowSuggestions(true);
+          })
+          .catch((err) => console.error(err));
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, activeTab]);
+
+  const handleSelectSuggestion = (name: string) => {
+    setSelectedArtist(name);
+    setIsSearchSelection(true);
+    setShowSuggestions(false);
+    setSearchQuery("");
+  };
 
   // Filter state
   const [startYear, setStartYear] = useState(2020);
@@ -424,15 +458,18 @@ export default function Dashboard() {
         <ArtistModal
           name={selectedArtist}
           type={activeTab}
-          startYear={startYear}
-          startWeek={startWeek}
-          endYear={endYear}
-          endWeek={endWeek}
-          rankLimit={rankLimit}
-          onClose={() => setSelectedArtist(null)}
+          startYear={isSearchSelection ? 2020 : startYear}
+          startWeek={isSearchSelection ? 1 : startWeek}
+          endYear={isSearchSelection ? 2025 : endYear}
+          endWeek={isSearchSelection ? 53 : endWeek}
+          rankLimit={isSearchSelection ? 200 : rankLimit}
+          onClose={() => {
+            setSelectedArtist(null);
+            setIsSearchSelection(false);
+          }}
         />
       )}
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-[95%] mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -445,6 +482,54 @@ export default function Dashboard() {
                 {new Date().toLocaleDateString()}
               </span>
             </p>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative w-full md:w-96">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder={`Rechercher un ${
+                  activeTab === "producer"
+                    ? "producteur"
+                    : activeTab === "editeur"
+                    ? "éditeur"
+                    : "artiste"
+                }...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#171717] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSuggestions([]);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Suggestions Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#171717] rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSelectSuggestion(suggestion)}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-white text-sm transition-colors flex items-center gap-2"
+                  >
+                    <Search className="w-3 h-3 text-gray-400" />
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
@@ -461,7 +546,7 @@ export default function Dashboard() {
             </button>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-[#171717] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap gap-4 items-end">
+            <div className="bg-white dark:bg-[#171717] px-6 py-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-wrap gap-6 items-end">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Classement
@@ -565,6 +650,17 @@ export default function Dashboard() {
             Producteurs (Beatmakers)
           </button>
           <button
+            onClick={() => setActiveTab("editeur")}
+            className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+              activeTab === "editeur"
+                ? "bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            Editeurs
+          </button>
+          <button
             onClick={() => setActiveTab("artist")}
             className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
               activeTab === "artist"
@@ -628,10 +724,17 @@ export default function Dashboard() {
                     className={`w-5 h-5 ${
                       activeTab === "producer"
                         ? "text-yellow-500"
+                        : activeTab === "editeur"
+                        ? "text-green-500"
                         : "text-purple-500"
                     }`}
                   />
-                  Top 10 {activeTab === "producer" ? "Producteurs" : "Artistes"}
+                  Top 10{" "}
+                  {activeTab === "producer"
+                    ? "Producteurs"
+                    : activeTab === "editeur"
+                    ? "Editeurs"
+                    : "Artistes"}
                 </h2>
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                   Par titres distincts
@@ -811,7 +914,11 @@ export default function Dashboard() {
                     </span>
                     <span className="font-medium text-blue-600 dark:text-blue-400">
                       {stats.length}{" "}
-                      {activeTab === "producer" ? "producteurs" : "artistes"}
+                      {activeTab === "producer"
+                        ? "producteurs"
+                        : activeTab === "editeur"
+                        ? "éditeurs"
+                        : "artistes"}
                     </span>
                   </div>
                 </div>
