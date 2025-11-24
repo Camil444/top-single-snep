@@ -65,7 +65,17 @@ A full-stack data project that scrapes weekly French music charts (SNEP), enrich
     - Go to **http://localhost:8080** (Login: `admin` / `admin`).
     - Enable and Trigger the `snep_update_weekly` DAG to fetch initial data.
 
-6.  **Access Dashboard**
+6.  **Start Dashboard**
+
+    The dashboard runs locally outside of Docker.
+
+    ```bash
+    cd viz_dashboard
+    npm install
+    npm run dev
+    ```
+
+7.  **Access Dashboard**
     - Open **http://localhost:3000** to view the analytics.
 
 ## 📂 Project Structure
