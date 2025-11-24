@@ -348,7 +348,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -358,7 +358,9 @@ export default function Dashboard() {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery.length >= 2) {
-        fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&type=${activeTab}`)
+        fetch(
+          `/api/search?q=${encodeURIComponent(searchQuery)}&type=${activeTab}`
+        )
           .then((res) => res.json())
           .then((data) => {
             setSuggestions(data);
@@ -498,7 +500,9 @@ export default function Dashboard() {
                 }...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
+                onFocus={() =>
+                  searchQuery.length >= 2 && setShowSuggestions(true)
+                }
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#171717] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

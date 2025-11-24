@@ -4,3 +4,4 @@ beautifulsoup4
 lyricsgenius
 psycopg2-binary
 numpy
+python-dotenv

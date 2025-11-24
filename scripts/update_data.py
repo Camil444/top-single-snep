@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script automatique de mise à jour des données musicales avec l'API Genius
-Exécution programmée : Mardi 18h00
+Exécution programmée : Tous les jours à 11h00
 
 Ce script enrichit les données du top musical avec :
 - Producteurs (producer_1, producer_2)
@@ -21,16 +21,32 @@ import logging
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
 from pathlib import Path
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
 # Configuration
-# Utilisation d'une variable d'environnement pour le token (sécurité)
-# Si la variable d'environnement est vide (ce qui peut arriver avec Docker si mal passé), on utilise la valeur par défaut
-env_token = os.getenv("GENIUS_ACCESS_TOKEN")
-ACCESS_TOKEN = env_token if env_token else "HrgvWPoBG2OyDAi8X7V13cxk4x_mabMYgPFSWUsYpcokLC4oDbIA8Gt9-lInHUJB"
-BASE_URL = "https://api.genius.com"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 CACHE_FILE = PROJECT_ROOT / "song_cache_v2.json"
+
+# Chargement des variables d'environnement
+if load_dotenv:
+    # Essayer de charger depuis viz_dashboard/.env.local
+    env_path = PROJECT_ROOT / 'viz_dashboard' / '.env.local'
+    if env_path.exists():
+        load_dotenv(env_path)
+    else:
+        # Fallback sur .env à la racine si existant
+        load_dotenv(PROJECT_ROOT / '.env')
+
+# Utilisation d'une variable d'environnement pour le token (sécurité)
+ACCESS_TOKEN = os.getenv("GENIUS_ACCESS_TOKEN")
+if not ACCESS_TOKEN:
+    logging.warning("GENIUS_ACCESS_TOKEN n'est pas défini dans les variables d'environnement.")
+
+BASE_URL = "https://api.genius.com"
 
 # Configuration logging
 logging.basicConfig(
