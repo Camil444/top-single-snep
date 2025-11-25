@@ -27,7 +27,7 @@ with DAG(
         env={
             'TARGET_YEAR': '2025',
             'DB_HOST': os.getenv('DB_HOST', 'db'),
-            'GENIUS_ACCESS_TOKEN': os.getenv('GENIUS_ACCESS_TOKEN', '')
+            'GENIUS_ACCESS_TOKEN': os.getenv('GENIUS_ACCESS_TOKEN')
         }
     )
 
