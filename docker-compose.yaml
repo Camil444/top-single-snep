@@ -16,7 +16,7 @@ services:
 
   af:
     container_name: airflow_container
-    image: apache/airflow:2.9.1
+    build: .
     ports:
       - "8080:8080"
     environment:

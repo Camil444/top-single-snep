@@ -23,7 +23,7 @@ with DAG(
 
     update_task = BashOperator(
         task_id='run_update_script',
-        bash_command='pip install pandas requests beautifulsoup4 lyricsgenius psycopg2-binary && cd /opt/airflow/project/scripts && python update.py',
+        bash_command='cd /opt/airflow/project/scripts && python update.py',
         env={
             'TARGET_YEAR': '2025',
             'DB_HOST': os.getenv('DB_HOST', 'db'),
