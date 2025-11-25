@@ -5,3 +5,5 @@ lyricsgenius
 psycopg2-binary
 numpy
 python-dotenv
+flask
+flask-cors
