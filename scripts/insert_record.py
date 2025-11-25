@@ -5,14 +5,14 @@ import os
 import logging
 from pathlib import Path
 
-# Configuration du logging
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Configuration de la base de données
+# Database configuration
 DB_CONFIG = {
     "dbname": "db",
     "user": "db_user",
@@ -25,7 +25,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
 def get_db_connection():
-    """Établit une connexion à la base de données PostgreSQL"""
+    """Establishes a connection to the PostgreSQL database"""
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         return conn
@@ -34,7 +34,7 @@ def get_db_connection():
         raise
 
 def create_table_for_year(year):
-    """Crée la table pour une année spécifique si elle n'existe pas"""
+    """Creates the table for a specific year if it does not exist"""
     table_name = f"top_singles_{year}"
     
     create_table_query = sql.SQL("""

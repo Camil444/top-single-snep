@@ -5,7 +5,7 @@ from scrap import SNEPScraper
 from update_data import GeniusDataEnricher
 from insert_record import insert_record, get_last_scraped_week
 
-# Configuration du logging
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -14,28 +14,28 @@ logger = logging.getLogger(__name__)
 
 def enrich_data_list(data_list, enricher):
     """
-    Enrichit une liste de dictionnaires (données SNEP) avec les données Genius.
+    Enriches a list of dictionaries (SNEP data) with Genius data.
     """
     enriched_count = 0
     total = len(data_list)
     
     for i, item in enumerate(data_list, 1):
         try:
-            # Log de progression tous les 10 items
+            # Progress log every 10 items
             if i % 10 == 0:
                 logger.info(f"Enrichissement en cours... {i}/{total}")
 
-            # Récupérer les détails via Genius (utilise le cache interne de GeniusDataEnricher)
+            # Retrieve details via Genius (uses GeniusDataEnricher internal cache)
             song_details = enricher.get_song_details(item['titre'], item['artiste'])
             
-            # Fusionner les données
+            # Merge data
             if song_details:
                 item.update(song_details)
                 enriched_count += 1
                 
         except Exception as e:
-            # En cas d'erreur (timeout, etc.), on loggue mais on NE BLOQUE PAS le processus.
-            # L'item sera inséré sans les données Genius (NULL en base), ce qui est mieux que rien.
+            # In case of error (timeout, etc.), we log but DO NOT BLOCK the process.
+            # The item will be inserted without Genius data (NULL in database), which is better than nothing.
             logger.error(f"Erreur lors de l'enrichissement de {item.get('titre', '?')} - {item.get('artiste', '?')}: {e}")
             
     logger.info(f"Enrichi {enriched_count}/{len(data_list)} entrées.")
@@ -43,10 +43,10 @@ def enrich_data_list(data_list, enricher):
 
 def update_database():
     """
-    Fonction principale de mise à jour :
-    1. Détermine la semaine actuelle.
-    2. Vérifie la dernière semaine en base.
-    3. Scrape, enrichit et insère les semaines manquantes.
+    Main update function:
+    1. Determine current week.
+    2. Check last week in database.
+    3. Scrape, enrich and insert missing weeks.
     """
     current_date = datetime.datetime.now()
     current_year = int(os.getenv("TARGET_YEAR", current_date.year))

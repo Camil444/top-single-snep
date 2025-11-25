@@ -5,7 +5,7 @@ import os
 
 default_args = {
     'owner': 'airflow',
-    'description': 'Orchestrateur pour le scraping et l\'insertion des données SNEP et de l\'api Genius',
+    'description': 'Orchestrator for scraping and inserting SNEP data and Genius API',
     'start_date': datetime(2025, 11, 23),
     'email_on_failure': False,
     'email_on_retry': False,
@@ -17,7 +17,7 @@ default_args = {
 with DAG(
     dag_id='snep_update_weekly',
     default_args=default_args,
-    schedule_interval='0 11 * * *', # Tous les jours à 11h00
+    schedule_interval='0 11 * * *', # Every day at 11:00 AM
     catchup=False
 ) as dag:
 

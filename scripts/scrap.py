@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Scraper pour récupérer les données du Top Singles de SNEP Musique
+Scraper to retrieve Top Singles data from SNEP Musique
 """
 
 import requests
@@ -16,35 +16,35 @@ import re
 import urllib3
 import json
 
-# Désactiver les avertissements SSL non sécurisés
+# Disable insecure SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Configuration du logging
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# --- Fonctions utilitaires de parsing (extraites pour modularité et tests) ---
+# --- Parsing utility functions (extracted for modularity and testing) ---
 
 def parse_artists_in_feat(artistes_text):
     """
-    Parse les artistes dans un feat. (peut contenir &, virgules, etc.)
+    Parse artists in a feat. (can contain &, commas, etc.)
     """
     if not artistes_text:
         return []
     
-    # Séparer par & et virgules
+    # Split by & and commas
     artistes = re.split(r'\s*[&,]\s*', artistes_text)
     return [a.strip() for a in artistes if a.strip()]
 
 def handle_x_separator(text):
     """
-    Gère intelligemment le X comme séparateur d'artistes
+    Smartly handles X as an artist separator
     """
-    # Pattern pour détecter un X entouré d'espaces entre des mots qui ressemblent à des noms
-    # On cherche : [Mot(s)] X [Mot(s)] où les mots commencent par une majuscule
+    # Pattern to detect an X surrounded by spaces between words that look like names
+    # We look for: [Word(s)] X [Word(s)] where words start with a capital letter
     x_pattern = r'\b([A-Z][A-Za-z\s]+?)\s+X\s+([A-Z][A-Za-z\s]+?)\b'
     
     def replace_x(match):

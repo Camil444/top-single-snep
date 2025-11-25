@@ -3,14 +3,14 @@ from psycopg2 import sql
 import os
 import logging
 
-# Configuration du logging
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Configuration de la base de données
+# Database configuration
 DB_CONFIG = {
     "dbname": "db",
     "user": "db_user",

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Script automatique de mise à jour des données musicales avec l'API Genius
-Exécution programmée : Tous les jours à 11h00
+Automatic script to update music data with the Genius API
+Scheduled execution: Every day at 11:00 AM
 
-Ce script enrichit les données du top musical avec :
-- Producteurs (producer_1, producer_2)
-- Auteurs (writer_1, writer_2)  
-- Date de sortie (release_date)
-- Informations sur les samples (sample_type, sample_from)
+This script enriches the top music data with:
+- Producers (producer_1, producer_2)
+- Writers (writer_1, writer_2)
+- Release date (release_date)
+- Sample information (sample_type, sample_from)
 """
 
 import pandas as pd
@@ -31,17 +31,17 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 CACHE_FILE = PROJECT_ROOT / "song_cache_v2.json"
 
-# Chargement des variables d'environnement
+# Load environment variables
 if load_dotenv:
-    # Essayer de charger depuis viz_dashboard/.env.local
+    # Try to load from viz_dashboard/.env.local
     env_path = PROJECT_ROOT / 'viz_dashboard' / '.env.local'
     if env_path.exists():
         load_dotenv(env_path)
     else:
-        # Fallback sur .env à la racine si existant
+        # Fallback to root .env if it exists
         load_dotenv(PROJECT_ROOT / '.env')
 
-# Utilisation d'une variable d'environnement pour le token (sécurité)
+# Use an environment variable for the token (security)
 ACCESS_TOKEN = os.getenv("GENIUS_ACCESS_TOKEN")
 if not ACCESS_TOKEN:
     logging.warning("GENIUS_ACCESS_TOKEN n'est pas défini dans les variables d'environnement.")

@@ -1,100 +1,84 @@
 # SNEP Analytics API
 
-Une API Flask légère pour interroger les données historiques du Top Singles SNEP (2020-2026). Cette API permet d'analyser les performances des artistes et des producteurs.
+A lightweight Flask API to query historical data from the SNEP Top Singles (2020-2026). This API allows analyzing the performance of artists and producers.
 
-## 🚀 Démarrage Rapide
+## 🚀 Quick Start
 
-### Prérequis
-
+### Prerequisites
 - Python 3.8+
-- Les dépendances listées dans `requirements.txt` (notamment `flask`, `flask-cors`, `psycopg2-binary`, `python-dotenv`).
+- Dependencies listed in `requirements.txt` (including `flask`, `flask-cors`, `psycopg2-binary`, `python-dotenv`).
 
 ### Installation
-
-1. Assurez-vous d'être à la racine du projet.
-2. Installez les dépendances :
+1. Ensure you are at the project root.
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-### Lancement
-
+### Launch
 ```bash
 python flask_api/app.py
 ```
-
-L'API sera accessible sur `http://localhost:5001`.
+The API will be accessible at `http://localhost:5001`.
 
 ---
 
 ## 📡 Endpoints
 
-### 1. Rechercher un Artiste ou Producteur
+### 1. Search for an Artist or Producer
+Retrieves statistics, list of songs, and rankings.
 
-Récupère les statistiques, la liste des morceaux et les classements.
+**URL**: `/api/artist/<name>`
+**Method**: `GET`
+**Parameters**:
+- `type` (optional): `artist` (default) or `producer`.
 
-**URL** : `/api/artist/<nom>`
-**Méthode** : `GET`
-**Paramètres** :
-
-- `type` (optionnel) : `artist` (défaut) ou `producer`.
-
-**Exemples** :
-
-- **Artiste** :
+**Examples**:
+- **Artist**:
   ```bash
   curl "http://localhost:5001/api/artist/Jul"
   ```
-- **Producteur** :
+- **Producer**:
   ```bash
   curl "http://localhost:5001/api/artist/Maximum%20Beats?type=producer"
   ```
 
-### 2. Politique de Confidentialité (GDPR)
+### 2. Privacy Policy (GDPR)
+Displays information about data processing and user rights.
 
-Affiche les informations sur le traitement des données et les droits des utilisateurs.
+**URL**: `/api/privacy`
+**Method**: `GET`
 
-**URL** : `/api/privacy`
-**Méthode** : `GET`
+### 3. Data Export (Portability)
+Dedicated endpoint for the full export of an entity's data.
 
-### 3. Export de Données (Portabilité)
-
-Endpoint dédié pour l'export complet des données d'une entité.
-
-**URL** : `/api/gdpr/export/<nom>`
-**Méthode** : `GET`
+**URL**: `/api/gdpr/export/<name>`
+**Method**: `GET`
 
 ---
 
-## 🛡️ Conformité RGPD (GDPR)
+## 🛡️ GDPR Compliance
 
-Cette API a été conçue en respectant les principes du Règlement Général sur la Protection des Données (RGPD/GDPR).
+This API has been designed in compliance with the General Data Protection Regulation (GDPR).
 
-### 1. Transparence et Droit à l'Information
+### 1. Transparency and Right to be Informed
+The `/api/privacy` endpoint provides a clear statement on:
+- The nature of collected data (public music chart data).
+- The purpose of processing (statistical analysis).
+- The contact details of the data controller.
 
-L'endpoint `/api/privacy` fournit une déclaration claire sur :
+### 2. Right of Access
+Any user can freely access stored data regarding an artist or producer via the search endpoints.
 
-- La nature des données collectées (données publiques de classements musicaux).
-- La finalité du traitement (analyse statistique).
-- Les coordonnées du contrôleur de données.
+### 3. Right to Data Portability
+The `/api/gdpr/export/<name>` endpoint allows retrieving all data associated with a person (artist or producer) in a structured, machine-readable format (JSON), facilitating its transfer.
 
-### 2. Droit d'Accès
+### 4. Data Minimization
+The API returns only information strictly necessary for music analysis (Title, Ranking, Weeks). No sensitive data (private life, contact details, etc.) is processed or exposed.
 
-Tout utilisateur peut accéder librement aux données stockées concernant un artiste ou un producteur via les endpoints de recherche.
+### 5. Right to Erasure and Rectification
+As indicated in the privacy policy, requests for data deletion or rectification must be addressed to the administrator (see `/api/privacy`). Since the API is a read-only interface, modifications are performed at the database level by the DPO.
 
-### 3. Droit à la Portabilité des Données
-
-L'endpoint `/api/gdpr/export/<nom>` permet de récupérer l'intégralité des données associées à une personne (artiste ou producteur) dans un format structuré et lisible par machine (JSON), facilitant leur transfert.
-
-### 4. Minimisation des Données
-
-L'API ne renvoie que les informations strictement nécessaires à l'analyse musicale (Titre, Classement, Semaines). Aucune donnée sensible (vie privée, coordonnées, etc.) n'est traitée ou exposée.
-
-### 5. Droit à l'Oubli et Rectification
-
-Comme indiqué dans la politique de confidentialité, les demandes de suppression ou de rectification de données doivent être adressées à l'administrateur (voir `/api/privacy`). L'API étant une interface de lecture, les modifications sont effectuées au niveau de la base de données par le DPO.
-
-### 6. Sécurité
-
-- L'API fonctionne en lecture seule sur la base de données.
-- Les identifiants de base de données sont gérés via des variables d'environnement (`.env`) et ne sont jamais exposés dans le code.
+### 6. Security
+- The API operates in read-only mode on the database.
+- Database credentials are managed via environment variables (`.env`) and are never exposed in the code.
