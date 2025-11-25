@@ -12,12 +12,21 @@ A full-stack data project that scrapes weekly French music charts (SNEP), enrich
 - **Frontend**: Next.js (React) + Tailwind CSS + Recharts for interactive analytics.
 - **Infrastructure**: Fully containerized with Docker Compose.
 
+## 🚀 Features
+
+- **Multi-Year Analysis**: Browse Top 50 charts from 2020 to present.
+- **Artist & Producer Analytics**: Visualize rankings, weeks in Top 50, and collaborations.
+- **New! Editor Analytics**: Track performance of music publishers/editors.
+- **Smart Search**: Instantly find Artists, Producers, or Editors with the new search bar.
+- **Data Enrichment**: Automatically fetches producers, writers, and samples via Genius API.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Docker & Docker Compose
 - Git
+- Node.js (for the dashboard)
 
 ### Installation
 
@@ -35,7 +44,7 @@ A full-stack data project that scrapes weekly French music charts (SNEP), enrich
     ```env
     # Database Configuration
     POSTGRES_USER=db_user
-    POSTGRES_PASSWORD=password
+    POSTGRES_PASSWORD=db_password
     POSTGRES_DB=db
     DB_HOST=db
     DB_PORT=5432
@@ -64,8 +73,18 @@ A full-stack data project that scrapes weekly French music charts (SNEP), enrich
 
 5.  **Initialize Data**
 
+    You can initialize the database using the provided script:
+
+    ```bash
+    chmod +x scripts/full_reload.sh
+    cd scripts
+    ./full_reload.sh
+    ```
+
+    Alternatively, use Airflow:
+
     - Go to **http://localhost:8080** (Login: `admin` / `admin`).
-    - Enable and Trigger the `snep_update_weekly` DAG to fetch initial data.
+    - Enable and Trigger the `snep_update_weekly` DAG (Runs daily at 11:00).
 
 6.  **Start Dashboard**
 
@@ -73,6 +92,9 @@ A full-stack data project that scrapes weekly French music charts (SNEP), enrich
 
     ```bash
     cd viz_dashboard
+    # Create local env file for the dashboard
+    echo "GENIUS_ACCESS_TOKEN=your_token_here" > .env.local
+
     npm install
     npm run dev
     ```
@@ -83,7 +105,7 @@ A full-stack data project that scrapes weekly French music charts (SNEP), enrich
 ## 📂 Project Structure
 
 - `airflow/`: DAGs and Airflow configuration.
-- `scripts/`: Python ETL scripts (`scrap.py`, `update_data.py`, `insert_record.py`).
+- `scripts/`: Python ETL scripts (`scrap.py`, `update_data.py`, `insert_record.py`, `full_reload.sh`).
 - `viz_dashboard/`: Next.js frontend application.
 - `postgres/`: Database initialization and data storage.
 - `data/`: CSV backups of chart data.

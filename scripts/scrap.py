@@ -14,6 +14,7 @@ import logging
 from datetime import datetime
 import re
 import urllib3
+import json
 
 # Désactiver les avertissements SSL non sécurisés
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -87,22 +88,20 @@ def parse_artists(artiste_string):
     
     # Remplacer les différents séparateurs par un séparateur uniforme
     # On utilise |SEPARATOR| comme délimiteur temporaire unique
-    separators = [
-        (' FT. ', '|SEPARATOR|')
-        (' FT ', '|SEPARATOR|'),
-        (' ft ', '|SEPARATOR|'),
-        ('FEAT.', '|SEPARATOR|'),
-        ('FEAT', '|SEPARATOR|'),
-        ('feat.', '|SEPARATOR|'),
-        ('feat', '|SEPARATOR|'),
-        ('Feat.', '|SEPARATOR|'),
-        ('Feat', '|SEPARATOR|'),
-        ('&', '|SEPARATOR|'),
-        (',', '|SEPARATOR|')
-    ]
     
-    for old, new in separators:
-        cleaned_string = cleaned_string.replace(old, new)
+    # Pattern for FT/FEAT (case insensitive)
+    # \s+ ensures at least one space before.
+    # (?:FT|FEAT) matches the keyword.
+    # (?:\.|\b) matches a dot OR a word boundary.
+    # \s* matches optional space after.
+    pattern_feat = r'\s+(?:FT|FEAT)(?:\.|\b)\s*'
+    cleaned_string = re.sub(pattern_feat, '|SEPARATOR|', cleaned_string, flags=re.IGNORECASE)
+    
+    # Pattern for & (surrounded by optional spaces)
+    cleaned_string = re.sub(r'\s*&\s*', '|SEPARATOR|', cleaned_string)
+    
+    # Pattern for comma
+    cleaned_string = re.sub(r'\s*,\s*', '|SEPARATOR|', cleaned_string)
     
     # Gestion intelligente du X comme séparateur
     cleaned_string = handle_x_separator(cleaned_string)
@@ -203,6 +202,31 @@ class SNEPScraper:
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
             logger.info(f"Dossier '{self.data_dir}' créé")
+
+        # Initialisation du cache
+        self.cache_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'snep_scrap_cache.json')
+        self.cache = self.load_cache()
+
+    def load_cache(self):
+        """Charge le cache depuis le fichier JSON"""
+        if os.path.exists(self.cache_file):
+            try:
+                with open(self.cache_file, 'r', encoding='utf-8') as f:
+                    logger.info(f"Chargement du cache depuis {self.cache_file}")
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"Erreur lors du chargement du cache : {e}")
+                return {}
+        return {}
+
+    def save_cache(self):
+        """Sauvegarde le cache dans le fichier JSON"""
+        try:
+            with open(self.cache_file, 'w', encoding='utf-8') as f:
+                json.dump(self.cache, f, ensure_ascii=False, indent=2)
+            logger.info("Cache mis à jour")
+        except Exception as e:
+            logger.error(f"Erreur lors de la sauvegarde du cache : {e}")
     
     def clean_title_and_extract_feat(self, titre):
         return clean_title_and_extract_feat(titre)
@@ -540,6 +564,13 @@ class SNEPScraper:
         Returns:
             Liste de dictionnaires contenant les données
         """
+        cache_key = f"{annee}_{semaine}"
+        
+        # Vérifier le cache
+        if cache_key in self.cache:
+            logger.info(f"Données récupérées du cache pour Année {annee}, Semaine {semaine}")
+            return self.cache[cache_key]
+
         logger.info(f"Récupération des données : Année {annee}, Semaine {semaine}")
         
         soup = self.get_page_content(semaine, annee)
@@ -551,6 +582,12 @@ class SNEPScraper:
         
         if data:
             logger.info(f"✓ Année {annee}, Semaine {semaine} : {len(data)} entrées récupérées")
+            # Mettre à jour le cache
+            self.cache[cache_key] = data
+            # Sauvegarder le cache périodiquement (ici à chaque semaine réussie pour éviter de tout perdre)
+            # Pour optimiser, on pourrait sauvegarder moins souvent, mais c'est plus sûr ainsi
+            # self.save_cache() -> On peut le faire à la fin de l'année ou ici. 
+            # Faisons-le ici pour l'instant pour être sûr.
             return data
         else:
             logger.warning(f"✗ Année {annee}, Semaine {semaine} : Aucune donnée trouvée")
@@ -577,9 +614,14 @@ class SNEPScraper:
             else:
                 semaines_manquantes.append(semaine)
             
-            # Pause entre les requêtes
-            time.sleep(self.delay)
+            # Pause entre les requêtes seulement si on n'a pas utilisé le cache
+            # Si on vient du cache, c'est instantané, pas besoin de sleep
+            if f"{annee}_{semaine}" not in self.cache:
+                time.sleep(self.delay)
         
+        # Sauvegarder le cache à la fin de l'année pour limiter les écritures disques
+        self.save_cache()
+
         # Sauvegarder toutes les données de l'année
         if all_data:
             self.save_to_csv(all_data, annee)

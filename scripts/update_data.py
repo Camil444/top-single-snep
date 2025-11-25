@@ -66,7 +66,8 @@ class OptimizedSongCache:
         self.cache_file = cache_file
         self.cache = self.load_cache()
         self.stats = {"hits": 0, "misses": 0, "api_calls": 0}
-    
+        self.unsaved_changes = 0  # Compteur de changements non sauvegardés
+
     def load_cache(self):
         if os.path.exists(self.cache_file):
             try:
@@ -102,13 +103,23 @@ class OptimizedSongCache:
     
     def set(self, title, artist, data):
         key = self.get_key(title, artist)
+        if key not in self.cache:
+            logger.debug(f"Ajout au cache: {key}")
         self.cache[key] = data
+        self.unsaved_changes += 1
+        
+        # Sauvegarder tous les 10 changements
+        if self.unsaved_changes >= 10:
+            self.save_cache()
+            self.unsaved_changes = 0
 
 class GeniusDataEnricher:
     """Enrichisseur de données musicales via l'API Genius"""
     
     def __init__(self):
         self.genius = lyricsgenius.Genius(ACCESS_TOKEN)
+        self.genius.timeout = 20  # Augmenter le timeout
+        self.genius.retries = 3   # Ajouter des retries
         self.cache = OptimizedSongCache()
         
     def get_song_details(self, title, artist):
@@ -136,7 +147,7 @@ class GeniusDataEnricher:
             song_id = song.to_dict()['id']
             headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
             
-            r = requests.get(f"{BASE_URL}/songs/{song_id}", headers=headers, timeout=10)
+            r = requests.get(f"{BASE_URL}/songs/{song_id}", headers=headers, timeout=20)
             
             if r.status_code != 200:
                 self.cache.set(title, artist, song_data)
