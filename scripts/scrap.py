@@ -51,27 +51,27 @@ def handle_x_separator(text):
         artist1 = match.group(1).strip()
         artist2 = match.group(2).strip()
         
-        # Vérifications supplémentaires pour s'assurer que c'est bien des noms d'artistes
-        # On évite de remplacer si les mots sont trop courts ou contiennent des caractères suspects
+        # Additional checks to ensure they are artist names
+        # Avoid replacing if words are too short or contain suspicious characters
         if (len(artist1) >= 2 and len(artist2) >= 2 and 
-            not re.search(r'\d{3,}', artist1 + artist2) and  # Éviter les nombres longs
+            not re.search(r'\d{3,}', artist1 + artist2) and  # Avoid long numbers
             not re.search(r'\b(THE|AND|OF|FOR|WITH|IN|ON|AT)\b', artist1 + " " + artist2, re.IGNORECASE)):
             return f"{artist1}|SEPARATOR|{artist2}"
         else:
-            # Retourner le texte original si ça ne ressemble pas à des noms d'artistes
+            # Return original text if it doesn't look like artist names
             return match.group(0)
     
     return re.sub(x_pattern, replace_x, text)
 
 def parse_artists(artiste_string):
     """
-    Sépare les artistes multiples selon les délimiteurs : virgule, FEAT., &, X (intelligent)
+    Separates multiple artists based on delimiters: comma, FEAT., &, X (smart)
     
     Args:
-        artiste_string: String contenant potentiellement plusieurs artistes
+        artiste_string: String potentially containing multiple artists
         
     Returns:
-        Dict avec artiste, artiste_2, artiste_3, artiste_4
+        Dict with artiste, artiste_2, artiste_3, artiste_4
     """
     result = {
         'artiste': '',
@@ -83,11 +83,11 @@ def parse_artists(artiste_string):
     if not artiste_string or artiste_string.strip() == '':
         return result
     
-    # Nettoyer la chaîne
+    # Clean the string
     cleaned_string = artiste_string.strip()
     
-    # Remplacer les différents séparateurs par un séparateur uniforme
-    # On utilise |SEPARATOR| comme délimiteur temporaire unique
+    # Replace different separators with a uniform separator
+    # We use |SEPARATOR| as a unique temporary delimiter
     
     # Pattern for FT/FEAT (case insensitive)
     # \s+ ensures at least one space before.
@@ -103,15 +103,15 @@ def parse_artists(artiste_string):
     # Pattern for comma
     cleaned_string = re.sub(r'\s*,\s*', '|SEPARATOR|', cleaned_string)
     
-    # Gestion intelligente du X comme séparateur
+    # Smart handling of X as separator
     cleaned_string = handle_x_separator(cleaned_string)
     
-    # Séparer selon le délimiteur uniforme
+    # Split by uniform delimiter
     artists = [artist.strip() for artist in cleaned_string.split('|SEPARATOR|') if artist.strip()]
     
-    # Assigner aux colonnes
+    # Assign to columns
     keys = ['artiste', 'artiste_2', 'artiste_3', 'artiste_4']
-    for i, artist in enumerate(artists[:4]):  # Maximum 4 artistes
+    for i, artist in enumerate(artists[:4]):  # Maximum 4 artists
         if i < len(keys):
             result[keys[i]] = artist
     
@@ -119,13 +119,13 @@ def parse_artists(artiste_string):
 
 def clean_title_and_extract_feat(titre):
     """
-    Nettoie le titre en supprimant les parenthèses et extrait les artistes en feat.
+    Cleans the title by removing parentheses and extracts feat. artists.
     
     Args:
-        titre: Titre original
+        titre: Original title
         
     Returns:
-        Tuple (titre_propre, liste_artistes_feat)
+        Tuple (clean_title, list_feat_artists)
     """
     if not titre:
         return titre, []
@@ -133,23 +133,23 @@ def clean_title_and_extract_feat(titre):
     titre_propre = titre.strip()
     artistes_feat = []
     
-    # Chercher les contenus entre parenthèses
+    # Search for content inside parentheses
     parentheses_pattern = r'\(([^)]+)\)'
     matches = re.findall(parentheses_pattern, titre_propre)
     
     for match in matches:
-        # Vérifier si c'est un feat.
+        # Check if it is a feat.
         if re.search(r'\b(feat\.?|ft\.?|featuring)\b', match, re.IGNORECASE):
-            # Extraire les artistes après feat.
+            # Extract artists after feat.
             feat_pattern = r'\b(?:feat\.?|ft\.?|featuring)\s+(.+)'
             feat_match = re.search(feat_pattern, match, re.IGNORECASE)
             if feat_match:
                 artistes_text = feat_match.group(1).strip()
-                # Séparer les artistes dans le feat.
+                # Separate artists in the feat.
                 artistes_dans_feat = parse_artists_in_feat(artistes_text)
                 artistes_feat.extend(artistes_dans_feat)
     
-    # Supprimer toutes les parenthèses du titre
+    # Remove all parentheses from the title
     titre_propre = re.sub(r'\s*\([^)]*\)\s*', ' ', titre_propre)
     titre_propre = re.sub(r'\s+', ' ', titre_propre).strip()
     
@@ -157,19 +157,19 @@ def clean_title_and_extract_feat(titre):
 
 def merge_artists(artists_data, feat_artists):
     """
-    Fusionne les artistes principaux avec les artistes feat. sans doublon
+    Merges main artists with feat. artists without duplicates
     """
-    # Collecter tous les artistes existants
+    # Collect all existing artists
     existing_artists = []
     for key in ['artiste', 'artiste_2', 'artiste_3', 'artiste_4']:
         if artists_data[key]:
             existing_artists.append(artists_data[key].upper())
     
-    # Ajouter les artistes feat. s'ils ne sont pas déjà présents
+    # Add feat. artists if they are not already present
     keys = ['artiste', 'artiste_2', 'artiste_3', 'artiste_4']
     for feat_artist in feat_artists:
         if feat_artist.upper() not in existing_artists:
-            # Trouver la prochaine colonne vide
+            # Find the next empty column
             for key in keys:
                 if not artists_data[key]:
                     artists_data[key] = feat_artist
@@ -183,50 +183,50 @@ def merge_artists(artists_data, feat_artists):
 class SNEPScraper:
     def __init__(self, delay_between_requests=1.5):
         """
-        Initialise le scraper SNEP
+        Initializes the SNEP scraper
         
         Args:
-            delay_between_requests: Délai en secondes entre chaque requête
+            delay_between_requests: Delay in seconds between each request
         """
         self.base_url = "https://snepmusique.com/les-tops/le-top-de-la-semaine/top-albums/"
         self.delay = delay_between_requests
         self.session = requests.Session()
-        # Désactiver la vérification SSL pour éviter les erreurs de certificats locaux
+        # Disable SSL verification to avoid local certificate errors
         self.session.verify = False
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         })
         
-        # Créer le dossier data s'il n'existe pas
+        # Create data folder if it doesn't exist
         self.data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
-            logger.info(f"Dossier '{self.data_dir}' créé")
+            logger.info(f"Folder '{self.data_dir}' created")
 
-        # Initialisation du cache
+        # Cache initialization
         self.cache_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'snep_scrap_cache.json')
         self.cache = self.load_cache()
 
     def load_cache(self):
-        """Charge le cache depuis le fichier JSON"""
+        """Loads cache from JSON file"""
         if os.path.exists(self.cache_file):
             try:
                 with open(self.cache_file, 'r', encoding='utf-8') as f:
-                    logger.info(f"Chargement du cache depuis {self.cache_file}")
+                    logger.info(f"Loading cache from {self.cache_file}")
                     return json.load(f)
             except Exception as e:
-                logger.error(f"Erreur lors du chargement du cache : {e}")
+                logger.error(f"Error loading cache: {e}")
                 return {}
         return {}
 
     def save_cache(self):
-        """Sauvegarde le cache dans le fichier JSON"""
+        """Saves cache to JSON file"""
         try:
             with open(self.cache_file, 'w', encoding='utf-8') as f:
                 json.dump(self.cache, f, ensure_ascii=False, indent=2)
-            logger.info("Cache mis à jour")
+            logger.info("Cache updated")
         except Exception as e:
-            logger.error(f"Erreur lors de la sauvegarde du cache : {e}")
+            logger.error(f"Error saving cache: {e}")
     
     def clean_title_and_extract_feat(self, titre):
         return clean_title_and_extract_feat(titre)
@@ -245,14 +245,14 @@ class SNEPScraper:
     
     def get_page_content(self, semaine, annee):
         """
-        Récupère le contenu HTML d'une page pour une semaine donnée
+        Retrieves HTML content of a page for a given week
         
         Args:
-            semaine: Numéro de la semaine
-            annee: Année
+            semaine: Week number
+            annee: Year
             
         Returns:
-            BeautifulSoup object ou None si erreur
+            BeautifulSoup object or None if error
         """
         params = {
             'categorie': 'Top Singles',
@@ -261,25 +261,25 @@ class SNEPScraper:
         }
         
         try:
-            logger.info(f"Récupération des données : Année {annee}, Semaine {semaine}")
+            logger.info(f"Retrieving data: Year {annee}, Week {semaine}")
             response = self.session.get(self.base_url, params=params, timeout=10)
             response.raise_for_status()
             return BeautifulSoup(response.content, 'html.parser')
         except requests.exceptions.RequestException as e:
-            logger.error(f"Erreur lors de la récupération de la page (Année {annee}, Semaine {semaine}): {e}")
+            logger.error(f"Error retrieving page (Year {annee}, Week {semaine}): {e}")
             return None
     
     def extract_data_from_page(self, soup, semaine, annee):
         """
-        Extrait les données de la page
+        Extracts data from the page
         
         Args:
             soup: BeautifulSoup object
-            semaine: Numéro de la semaine
-            annee: Année
+            semaine: Week number
+            annee: Year
             
         Returns:
-            Liste de dictionnaires contenant les données
+            List of dictionaries containing the data
         """
         data = []
         
@@ -287,47 +287,47 @@ class SNEPScraper:
             return data
         
         try:
-            # Chercher le conteneur principal avec les articles
-            # Les données peuvent être dans des articles ou des divs avec la classe 'item'
+            # Search for main container with articles
+            # Data can be in articles or divs with class 'item'
             items = soup.find_all('article', class_='classement-item')
             
             if not items:
-                # Alternative : chercher des divs avec classe item
+                # Alternative: search for divs with class item
                 items = soup.find_all('div', class_='item')
             
             if not items:
-                # Autre alternative : chercher dans la structure div.items
+                # Another alternative: search in div.items structure
                 items_container = soup.find('div', class_='items')
                 if items_container:
                     items = items_container.find_all(['article', 'div'], recursive=False)
             
             if not items:
-                # Dernière tentative : chercher toutes les structures qui ressemblent à des items de classement
+                # Last attempt: search all structures that look like ranking items
                 main_content = soup.find(['main', 'div'], id=['primary', 'content', 'main-content'])
                 if main_content:
-                    # Chercher les blocs de données
+                    # Search for data blocks
                     items = []
                     
-                    # Pattern pour identifier les blocs de classement
+                    # Pattern to identify ranking blocks
                     classement_blocks = main_content.find_all(['div', 'article'], 
                                                              class_=re.compile(r'(item|single|track|classement)', re.I))
                     
                     for block in classement_blocks:
-                        # Vérifier si c'est bien un item du classement
+                        # Check if it is indeed a ranking item
                         if block.find(text=re.compile(r'^\d+$|^\d+e?La Semaine', re.I)):
                             items.append(block)
             
-            logger.info(f"Nombre d'items trouvés : {len(items)}")
+            logger.info(f"Number of items found: {len(items)}")
             
             for item in items:
                 try:
                     item_data = {}
                     
-                    # Extraire le classement (nombre au début ou dans une balise spécifique)
+                    # Extract ranking (number at the beginning or in a specific tag)
                     classement = None
                     
-                    # PRIORITÉ 1: Chercher spécifiquement la classe "rang" (SNEP standard)
-                    # On exclut explicitement "rang_precedent"
+                    # PRIORITY 1: Specifically search for class "rang" (SNEP standard)
+                    # Explicitly exclude "rang_precedent"
                     classement_elem = item.find('div', class_='rang')
                     if classement_elem:
                         classement_text = classement_elem.get_text(strip=True)
@@ -335,13 +335,13 @@ class SNEPScraper:
                         if match:
                             classement = match.group(1)
 
-                    # PRIORITÉ 2: Si pas trouvé, chercher avec des regex mais en excluant "precedent"
+                    # PRIORITY 2: If not found, search with regex but excluding "precedent"
                     if not classement:
-                        # On cherche les classes qui matchent rank/position/etc...
+                        # Search for classes matching rank/position/etc...
                         candidates = item.find_all(['span', 'div', 'strong'], class_=re.compile(r'(rank|position|classement|number)', re.I))
                         
                         for candidate in candidates:
-                            # Vérifier que la classe ne contient pas "precedent" ou "previous"
+                            # Check that class does not contain "precedent" or "previous"
                             classes = candidate.get('class', [])
                             class_str = " ".join(classes).lower()
                             
@@ -355,17 +355,17 @@ class SNEPScraper:
                                 break
                     
                     if not classement:
-                        # Chercher dans le texte de l'item (fallback)
+                        # Search in item text (fallback)
                         text = item.get_text(strip=True)
                         match = re.match(r'^(\d+)', text)
                         if match:
                             classement = match.group(1)
                     
                     
-                    # Extraire le titre, l'artiste et l'éditeur
-                    # Ces informations peuvent être dans différentes balises
+                    # Extract title, artist and label
+                    # These information can be in different tags
                     
-                    # Méthode 1: Chercher des balises spécifiques
+                    # Method 1: Search for specific tags
                     titre_elem = item.find(['h2', 'h3', 'h4', 'h5', 'span', 'div'], 
                                           class_=re.compile(r'(title|titre|song|track)', re.I))
                     artiste_elem = item.find(['span', 'div', 'p'], 
@@ -377,22 +377,22 @@ class SNEPScraper:
                     artiste = artiste_elem.get_text(strip=True) if artiste_elem else None
                     editeur = editeur_elem.get_text(strip=True) if editeur_elem else None
                     
-                    # Méthode 2: Si pas trouvé, essayer d'analyser le texte complet
+                    # Method 2: If not found, try to parse full text
                     if not all([titre, artiste, editeur]):
-                        # Obtenir tout le texte et le diviser intelligemment
+                        # Get all text and split intelligently
                         lines = []
                         for elem in item.find_all(text=True):
                             text = elem.strip()
                             if text and not re.match(r'^(\d+e?La Semaine|Nouveau)', text, re.I):
                                 lines.append(text)
                         
-                        # Filtrer les lignes pour enlever le classement et les infos de semaine
+                        # Filter lines to remove ranking and week info
                         filtered_lines = []
                         for line in lines:
                             if not re.match(r'^\d+$', line) and len(line) > 2:
                                 filtered_lines.append(line)
                         
-                        # Généralement : Titre, Artiste, Éditeur
+                        # Generally: Title, Artist, Label
                         if len(filtered_lines) >= 3:
                             titre = titre or filtered_lines[0]
                             artiste = artiste or filtered_lines[1]
@@ -403,15 +403,15 @@ class SNEPScraper:
                         elif len(filtered_lines) == 1:
                             titre = titre or filtered_lines[0]
                     
-                    # Si on a au moins le classement et le titre, ajouter l'entrée
+                    # If we have at least ranking and title, add entry
                     if classement and titre:
-                        # Nettoyer le titre et extraire les feat.
+                        # Clean title and extract feat.
                         titre_propre, feat_artists = self.clean_title_and_extract_feat(titre)
                         
-                        # Parser les artistes multiples
+                        # Parse multiple artists
                         artists_data = self.parse_artists(artiste or '')
                         
-                        # Fusionner avec les artistes feat.
+                        # Merge with feat. artists
                         artists_data = self.merge_artists(artists_data, feat_artists)
                         
                         entry = {
@@ -426,48 +426,48 @@ class SNEPScraper:
                             'semaine': semaine
                         }
                         data.append(entry)
-                        logger.debug(f"Entrée ajoutée : {entry}")
+                        logger.debug(f"Entry added: {entry}")
                     
                 except Exception as e:
-                    logger.error(f"Erreur lors de l'extraction d'un item : {e}")
+                    logger.error(f"Error extracting item: {e}")
                     continue
             
-            # Si aucun item n'a été trouvé avec la méthode structurée,
-            # essayer une extraction basée sur le texte
+            # If no item found with structured method,
+            # try text-based extraction
             if len(data) == 0:
-                logger.info("Tentative d'extraction alternative basée sur le texte...")
+                logger.info("Attempting alternative text-based extraction...")
                 data = self.extract_data_from_text(soup, semaine, annee)
             
-            logger.info(f"Nombre d'entrées extraites : {len(data)}")
+            logger.info(f"Number of entries extracted: {len(data)}")
             
         except Exception as e:
-            logger.error(f"Erreur lors de l'extraction des données : {e}")
+            logger.error(f"Error extracting data: {e}")
         
         return data
     
     def extract_data_from_text(self, soup, semaine, annee):
         """
-        Méthode alternative pour extraire les données basée sur l'analyse du texte
+        Alternative method to extract data based on text analysis
         """
         data = []
         
         try:
-            # Obtenir tout le texte de la page
+            # Get all text from the page
             text_content = soup.get_text()
             
-            # Diviser en lignes et nettoyer
+            # Split into lines and clean
             lines = [line.strip() for line in text_content.split('\n') if line.strip()]
             
-            # Pattern pour identifier un numéro de classement
+            # Pattern to identify a ranking number
             classement_pattern = re.compile(r'^(\d{1,3})$')
             
             i = 0
             while i < len(lines):
-                # Chercher un numéro de classement
+                # Search for a ranking number
                 if classement_pattern.match(lines[i]):
                     classement = lines[i]
                     
-                    # Les lignes suivantes devraient être titre, artiste, éditeur
+                    # Following lines should be title, artist, label
                     titre = None
                     artiste = None
                     editeur = None
@@ -475,17 +475,17 @@ class SNEPScraper:
                     j = i + 1
                     collected_lines = []
                     
-                    # Collecter les prochaines lignes jusqu'au prochain classement ou indicateur
+                    # Collect next lines until next ranking or indicator
                     while j < len(lines) and not classement_pattern.match(lines[j]):
                         line = lines[j]
-                        # Ignorer les lignes de navigation et métadonnées
+                        # Ignore navigation and metadata lines
                         if not any(skip in line.lower() for skip in ['semaine', 'nouveau', 'télécharger', 'pdf', 'précédente', 'suivante']):
-                            # Ignorer aussi les positions de la semaine dernière
+                            # Also ignore last week's positions
                             if not re.match(r'^\d+e?La Semaine', line, re.I):
                                 collected_lines.append(line)
                         j += 1
                     
-                    # Assigner les lignes collectées
+                    # Assign collected lines
                     if len(collected_lines) >= 1:
                         titre = collected_lines[0]
                     if len(collected_lines) >= 2:
@@ -493,15 +493,15 @@ class SNEPScraper:
                     if len(collected_lines) >= 3:
                         editeur = collected_lines[2]
                     
-                    # Ajouter l'entrée si on a au moins un titre
+                    # Add entry if we have at least a title
                     if titre:
-                        # Nettoyer le titre et extraire les feat.
+                        # Clean title and extract feat.
                         titre_propre, feat_artists = self.clean_title_and_extract_feat(titre)
                         
-                        # Parser les artistes multiples
+                        # Parse multiple artists
                         artists_data = self.parse_artists(artiste or '')
                         
-                        # Fusionner avec les artistes feat.
+                        # Merge with feat. artists
                         artists_data = self.merge_artists(artists_data, feat_artists)
                         
                         entry = {
@@ -522,20 +522,20 @@ class SNEPScraper:
                     i += 1
         
         except Exception as e:
-            logger.error(f"Erreur lors de l'extraction alternative : {e}")
+            logger.error(f"Error during alternative extraction: {e}")
         
         return data
     
     def save_to_csv(self, data, annee):
         """
-        Sauvegarde les données dans un fichier CSV
+        Saves data to a CSV file
         
         Args:
-            data: Liste de dictionnaires contenant les données
-            annee: Année pour le nom du fichier
+            data: List of dictionaries containing the data
+            annee: Year for the filename
         """
         if not data:
-            logger.warning(f"Aucune donnée à sauvegarder pour l'année {annee}")
+            logger.warning(f"No data to save for year {annee}")
             return
         
         filename = os.path.join(self.data_dir, f"top_singles_{annee}.csv")
@@ -549,60 +549,60 @@ class SNEPScraper:
                 for row in data:
                     writer.writerow(row)
             
-            logger.info(f"Données sauvegardées dans {filename} ({len(data)} entrées)")
+            logger.info(f"Data saved in {filename} ({len(data)} entries)")
         except Exception as e:
-            logger.error(f"Erreur lors de la sauvegarde du CSV : {e}")
+            logger.error(f"Error saving CSV: {e}")
     
     def scrape_week(self, annee, semaine):
         """
-        Scrape une semaine spécifique et retourne les données (sans sauvegarder en CSV)
+        Scrapes a specific week and returns the data (without saving to CSV)
         
         Args:
-            annee: Année à scraper
-            semaine: Semaine à scraper
+            annee: Year to scrape
+            semaine: Week to scrape
             
         Returns:
-            Liste de dictionnaires contenant les données
+            List of dictionaries containing the data
         """
         cache_key = f"{annee}_{semaine}"
         
-        # Vérifier le cache
+        # Check cache
         if cache_key in self.cache:
-            logger.info(f"Données récupérées du cache pour Année {annee}, Semaine {semaine}")
+            logger.info(f"Data retrieved from cache for Year {annee}, Week {semaine}")
             return self.cache[cache_key]
 
-        logger.info(f"Récupération des données : Année {annee}, Semaine {semaine}")
+        logger.info(f"Retrieving data: Year {annee}, Week {semaine}")
         
         soup = self.get_page_content(semaine, annee)
         if not soup:
-            logger.warning(f"✗ Année {annee}, Semaine {semaine} : Aucune donnée trouvée (Erreur requête)")
+            logger.warning(f"✗ Year {annee}, Week {semaine} : No data found (Request error)")
             return []
             
         data = self.extract_data_from_page(soup, semaine, annee)
         
         if data:
-            logger.info(f"✓ Année {annee}, Semaine {semaine} : {len(data)} entrées récupérées")
-            # Mettre à jour le cache
+            logger.info(f"✓ Year {annee}, Week {semaine} : {len(data)} entries retrieved")
+            # Update cache
             self.cache[cache_key] = data
-            # Sauvegarder le cache périodiquement (ici à chaque semaine réussie pour éviter de tout perdre)
-            # Pour optimiser, on pourrait sauvegarder moins souvent, mais c'est plus sûr ainsi
-            # self.save_cache() -> On peut le faire à la fin de l'année ou ici. 
-            # Faisons-le ici pour l'instant pour être sûr.
+            # Save cache periodically (here after each successful week to avoid losing everything)
+            # To optimize, we could save less often, but this is safer.
+            # self.save_cache() -> Can be done at the end of the year or here. 
+            # Let's do it here for now to be safe.
             return data
         else:
-            logger.warning(f"✗ Année {annee}, Semaine {semaine} : Aucune donnée trouvée")
+            logger.warning(f"✗ Year {annee}, Week {semaine} : No data found")
             return []
 
     def scrape_year(self, annee, semaine_debut, semaine_fin):
         """
-        Scrape toutes les semaines d'une année
+        Scrapes all weeks of a year
         
         Args:
-            annee: Année à scraper
-            semaine_debut: Première semaine à scraper
-            semaine_fin: Dernière semaine à scraper
+            annee: Year to scrape
+            semaine_debut: First week to scrape
+            semaine_fin: Last week to scrape
         """
-        logger.info(f"Début du scraping pour l'année {annee} (semaines {semaine_debut} à {semaine_fin})")
+        logger.info(f"Starting scraping for year {annee} (weeks {semaine_debut} to {semaine_fin})")
         all_data = []
         semaines_manquantes = []
         
@@ -614,27 +614,27 @@ class SNEPScraper:
             else:
                 semaines_manquantes.append(semaine)
             
-            # Pause entre les requêtes seulement si on n'a pas utilisé le cache
-            # Si on vient du cache, c'est instantané, pas besoin de sleep
+            # Pause between requests only if we didn't use cache
+            # If coming from cache, it's instant, no need to sleep
             if f"{annee}_{semaine}" not in self.cache:
                 time.sleep(self.delay)
         
-        # Sauvegarder le cache à la fin de l'année pour limiter les écritures disques
+        # Save cache at the end of the year to limit disk writes
         self.save_cache()
 
-        # Sauvegarder toutes les données de l'année
+        # Save all data for the year
         if all_data:
             self.save_to_csv(all_data, annee)
         
-        # Log des semaines manquantes
+        # Log missing weeks
         if semaines_manquantes:
-            logger.warning(f"Semaines manquantes pour {annee}: {semaines_manquantes}")
+            logger.warning(f"Missing weeks for {annee}: {semaines_manquantes}")
         
         return all_data
     
     def clean_existing_csv_files(self):
         """
-        Supprime les fichiers CSV existants pour les régénérer
+        Deletes existing CSV files to regenerate them
         """
         years = [2020, 2021, 2022, 2023, 2024, 2025]
         deleted_files = []
@@ -645,80 +645,80 @@ class SNEPScraper:
                 try:
                     os.remove(filename)
                     deleted_files.append(filename)
-                    logger.info(f"Fichier supprimé : {filename}")
+                    logger.info(f"File deleted: {filename}")
                 except Exception as e:
-                    logger.error(f"Erreur lors de la suppression de {filename} : {e}")
+                    logger.error(f"Error deleting {filename} : {e}")
         
         if deleted_files:
-            logger.info(f"Suppression terminée : {len(deleted_files)} fichiers supprimés")
+            logger.info(f"Deletion complete: {len(deleted_files)} files deleted")
         else:
-            logger.info("Aucun fichier CSV existant à supprimer")
+            logger.info("No existing CSV files to delete")
     
     def run(self):
         """
-        Lance le scraping complet
+        Starts the full scraping process
         """
         logger.info("=" * 50)
-        logger.info("Démarrage du scraper SNEP")
+        logger.info("Starting SNEP scraper")
         logger.info("=" * 50)
         
-        # NOTE: Suppression automatique désactivée pour éviter la perte de données
+        # NOTE: Automatic deletion disabled to avoid data loss
         # self.clean_existing_csv_files()
         
-        # Calcul dynamique de la semaine actuelle
+        # Dynamic calculation of current week
         now = datetime.now()
         current_year = now.year
         current_week = now.isocalendar()[1]
         
-        # Scraper l'année en cours (2025)
+        # Scrape current year (2025)
         if current_year == 2025:
-            # On va jusqu'à la semaine précédente pour être sûr que les données sont publiées
-            # Ou jusqu'à la semaine actuelle si on veut tenter
+            # Go up to previous week to ensure data is published
+            # Or up to current week if we want to try
             limit_week = current_week - 1 if current_week > 1 else 1
             
-            # Pour le test demandé, on force jusqu'à 45 si on est au-delà, ou on utilise la logique dynamique
-            # Ici je respecte la demande explicite de l'utilisateur d'aller jusqu'à 45 pour le test
+            # For the requested test, force up to 45 if beyond, or use dynamic logic
+            # Here I respect the user's explicit request to go up to 45 for the test
             limit_week = 45 
             
-            logger.info(f"Scraping de l'année en cours {current_year} jusqu'à la semaine {limit_week}")
+            logger.info(f"Scraping current year {current_year} up to week {limit_week}")
             data_2025 = self.scrape_year(2025, 1, limit_week)
-            logger.info(f"Total 2025 : {len(data_2025)} entrées")
+            logger.info(f"Total 2025 : {len(data_2025)} entries")
         
-        # Scraper les années précédentes seulement si nécessaire
+        # Scrape previous years only if necessary
         for year in range(2024, 2019, -1):
-            # On force le scraping même si le fichier existe car on veut corriger les classements
-            logger.info(f"Lancement du scraping pour {year}...")
+            # Force scraping even if file exists because we want to fix rankings
+            logger.info(f"Starting scraping for {year}...")
             data_year = self.scrape_year(year, 1, 52)
-            logger.info(f"Total {year} : {len(data_year)} entrées")
+            logger.info(f"Total {year} : {len(data_year)} entries")
         
         logger.info("=" * 50)
-        logger.info("Scraping terminé !")
+        logger.info("Scraping finished!")
         logger.info("=" * 50)
 
 
 def main():
     """
-    Fonction principale
+    Main function
     """
     print("""
     ╔══════════════════════════════════════════╗
     ║     SNEP Top Singles Scraper            ║
-    ║     Récupération des données en cours... ║
+    ║     Retrieving data...                  ║
     ╚══════════════════════════════════════════╝
     """)
     
-    # Créer et lancer le scraper
+    # Create and run scraper
     scraper = SNEPScraper(delay_between_requests=1.5)
     
     try:
         scraper.run()
-        print("\n✅ Scraping terminé avec succès !")
-        print("📁 Les fichiers CSV ont été sauvegardés dans le dossier 'data'")
+        print("\n✅ Scraping completed successfully!")
+        print("📁 CSV files have been saved in the 'data' folder")
     except KeyboardInterrupt:
-        print("\n⚠️ Scraping interrompu par l'utilisateur")
+        print("\n⚠️ Scraping interrupted by user")
     except Exception as e:
-        print(f"\n❌ Erreur lors du scraping : {e}")
-        logger.error(f"Erreur fatale : {e}", exc_info=True)
+        print(f"\n❌ Error during scraping: {e}")
+        logger.error(f"Fatal error: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

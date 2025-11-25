@@ -28,8 +28,8 @@ def get_artist_stats(artist_name):
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Construct the query to union all tables from 2020 to 2025
-        years = range(2020, 2026) 
+        # Construct the query to union all tables from 2020 to 2026
+        years = range(2020, 2027) 
         
         union_parts = []
         for year in years:
