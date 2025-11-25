@@ -79,13 +79,13 @@ def insert_record(data_list, year):
     Insère une liste de dictionnaires dans la table de l'année correspondante.
     Utilisé par update.py pour les nouvelles données.
     """
+    # S'assurer que la table existe (même si pas de données)
+    create_table_for_year(year)
+
     if not data_list:
         return
 
     table_name = f"top_singles_{year}"
-    
-    # S'assurer que la table existe
-    create_table_for_year(year)
     
     conn = get_db_connection()
     cur = conn.cursor()
