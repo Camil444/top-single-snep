@@ -2,8 +2,8 @@ name: Weekly SNEP Chart Update
 
 on:
   schedule:
-    # Every Tuesday at 10:00 UTC (charts published Monday evening)
-    - cron: '0 10 * * 2'
+    # Every Friday at 10:00 UTC (charts published Thursday evening)
+    - cron: '0 10 * * 5'
   workflow_dispatch:
     # Allow manual trigger from GitHub UI
 
