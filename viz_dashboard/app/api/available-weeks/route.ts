@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import pool from "@/lib/db";
+import { Client } from "pg";
 
-// Returns the min and max available week for each year in chart_entries
 export async function GET() {
+  const client = new Client({
+    connectionString:
+      process.env.DATABASE_URL || "postgresql://db_user:db_password@localhost:5432/db",
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  });
+
   try {
-    const result = await pool.query(`
+    await client.connect();
+    const result = await client.query(`
       SELECT annee, MIN(semaine) AS min_week, MAX(semaine) AS max_week
-      FROM chart_entries
+      FROM public.chart_entries
       GROUP BY annee
       ORDER BY annee
     `);
@@ -22,9 +28,8 @@ export async function GET() {
     return NextResponse.json(limits);
   } catch (error) {
     console.error("Database error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } finally {
+    await client.end();
   }
 }
