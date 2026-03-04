@@ -1020,12 +1020,13 @@ export default function Dashboard() {
                 Objectif
               </h3>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                Vision agrégée des données de classement hebdomadaires du{" "}
-                <strong>Top Singles SNEP</strong> (2020 → aujourd&apos;hui),
-                enrichies par l&apos;API Genius avec les données sur les
-                producteurs, auteurs et samples. Permet d&apos;analyser les
-                tendances, identifier les acteurs clés de l&apos;industrie
-                musicale française et suivre la longévité des titres.
+                Qui sont les beatmakers qui dominent les charts ? Quels
+                artistes ont marqué la décennie ? Ce dashboard agrège les
+                classements hebdomadaires du{" "}
+                <strong>Top Singles SNEP</strong> depuis 2020 et les enrichit
+                avec les données de production issues de Genius — pour révéler,
+                derrière chaque hit, les producteurs et artistes qui façonnent
+                la musique française.
               </p>
             </div>
 
@@ -1054,8 +1055,7 @@ export default function Dashboard() {
                       Genius API
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      Enrichissement : producteurs, auteurs-compositeurs,
-                      samples et dates de sortie
+                      Enrichissement : producteurs, auteurs-compositeurs et dates de sortie
                     </p>
                   </div>
                 </div>
@@ -1088,7 +1088,7 @@ export default function Dashboard() {
                   Camil Hennebert
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Data Analyst · Data Engineer
+                  Data Analyst
                 </p>
               </div>
               <a
