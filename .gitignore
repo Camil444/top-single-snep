@@ -34,9 +34,12 @@ song_cache_v2.json
 # Archives
 archive/
 
-# Docker (local dev only)
+# Docker & Airflow (local dev only)
 docker-compose.yaml
 Dockerfile
+airflow/
+postgres/
+flask_api/
 
 # Jupyter notebooks (local analysis only)
 *.ipynb
