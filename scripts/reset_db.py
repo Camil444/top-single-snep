@@ -3,48 +3,58 @@ from psycopg2 import sql
 import os
 import logging
 
-# Logging configuration
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Database configuration
 DB_CONFIG = {
-    "dbname": "db",
-    "user": "db_user",
-    "password": "db_password",
+    "dbname": os.getenv("POSTGRES_DB", "db"),
+    "user": os.getenv("POSTGRES_USER", "db_user"),
+    "password": os.getenv("POSTGRES_PASSWORD", "db_password"),
     "host": os.getenv("DB_HOST", "localhost"),
     "port": "5432"
 }
 
+
 def get_db_connection():
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
-        return conn
+        return psycopg2.connect(**DB_CONFIG)
     except Exception as e:
-        logger.error(f"Erreur de connexion à la base de données: {e}")
+        logger.error(f"DB connection error: {e}")
         raise
+
 
 def reset_database():
     conn = get_db_connection()
     cur = conn.cursor()
-    
-    years = range(2020, 2027)
-    
-    for year in years:
-        table_name = f"top_singles_{year}"
+
+    # Drop in reverse dependency order
+    tables = [
+        'chart_entries',
+        'song_artists',
+        'song_producers',
+        'song_writers',
+        'songs',
+        'labels',
+        'artists',
+        'producers',
+        'writers',
+        # Old flat tables (kept for backward compat during transition)
+        'top_singles_2020', 'top_singles_2021', 'top_singles_2022',
+        'top_singles_2023', 'top_singles_2024', 'top_singles_2025', 'top_singles_2026',
+    ]
+
+    for table in tables:
         try:
-            cur.execute(sql.SQL("DROP TABLE IF EXISTS {}").format(sql.Identifier(table_name)))
-            logger.info(f"Table {table_name} supprimée.")
+            cur.execute(sql.SQL("DROP TABLE IF EXISTS {} CASCADE").format(sql.Identifier(table)))
+            logger.info(f"Table {table} dropped.")
         except Exception as e:
-            logger.error(f"Erreur lors de la suppression de {table_name}: {e}")
-            
+            logger.error(f"Error dropping {table}: {e}")
+
     conn.commit()
     cur.close()
     conn.close()
-    logger.info("Réinitialisation de la base de données terminée.")
+    logger.info("Database reset complete.")
+
 
 if __name__ == "__main__":
     reset_database()
