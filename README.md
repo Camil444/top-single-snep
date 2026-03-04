@@ -1,6 +1,6 @@
 # SNEP Top 50 Analytics & Dashboard
 
-**Live Demo:** [https://vizdashboard.vercel.app](https://vizdashboard.vercel.app)
+**Live Demo:** [https://french-top-charts-analytics.vercel.app](https://french-top-charts-analytics.vercel.app)
 
 ![Dashboard Preview](artiste_picture/dashboard_example.png)
 
