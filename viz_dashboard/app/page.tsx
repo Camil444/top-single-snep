@@ -390,6 +390,7 @@ export default function Dashboard() {
   const [endWeek, setEndWeek] = useState(53);
   const [rankLimit, setRankLimit] = useState(200);
   const [weekLimits, setWeekLimits] = useState<Record<number, { min: number; max: number }>>({});
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/available-weeks")
@@ -972,6 +973,140 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* About button — fixed bottom-right */}
+      <button
+        onClick={() => setAboutOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-[#171717] border border-gray-200 dark:border-gray-700 shadow-md text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      >
+        <span className="text-base leading-none">ℹ️</span>
+        À propos
+      </button>
+
+      {/* About modal */}
+      {aboutOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setAboutOpen(false)}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200" />
+
+          {/* Panel */}
+          <div
+            className="relative z-10 w-full max-w-lg bg-white dark:bg-[#171717] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-8 space-y-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close */}
+            <button
+              onClick={() => setAboutOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Title */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-wide uppercase">
+                French Top Charts Analytics
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Dashboard d&apos;analyse des classements musicaux français
+              </p>
+            </div>
+
+            {/* Objective */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Objectif
+              </h3>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                Vision agrégée des données de classement hebdomadaires du{" "}
+                <strong>Top Singles SNEP</strong> (2020 → aujourd&apos;hui),
+                enrichies par l&apos;API Genius avec les données sur les
+                producteurs, auteurs et samples. Permet d&apos;analyser les
+                tendances, identifier les acteurs clés de l&apos;industrie
+                musicale française et suivre la longévité des titres.
+              </p>
+            </div>
+
+            {/* Data sources */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Sources de données
+              </h3>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <span className="text-lg mt-0.5">🎵</span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      SNEP Musique
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Syndicat National de l&apos;Édition Phonographique —
+                      classements Top Singles hebdomadaires (Top 200), 2020 → présent
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <span className="text-lg mt-0.5">🎤</span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Genius API
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Enrichissement : producteurs, auteurs-compositeurs,
+                      samples et dates de sortie
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stack */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Stack technique
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {["Python", "PostgreSQL", "Apache Airflow", "Next.js", "Docker"].map(
+                  (tech) => (
+                    <span
+                      key={tech}
+                      className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800"
+                    >
+                      {tech}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Author + links */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  Camil Hennebert
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Data Analyst · Data Engineer
+                </p>
+              </div>
+              <a
+                href="https://github.com/Camil444/top-single-snep"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 dark:bg-gray-700 text-white text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+                </svg>
+                GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
