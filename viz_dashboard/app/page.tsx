@@ -386,9 +386,22 @@ export default function Dashboard() {
   // Filter state
   const [startYear, setStartYear] = useState(2020);
   const [startWeek, setStartWeek] = useState(1);
-  const [endYear, setEndYear] = useState(2025);
+  const [endYear, setEndYear] = useState(2026);
   const [endWeek, setEndWeek] = useState(53);
   const [rankLimit, setRankLimit] = useState(200);
+  const [weekLimits, setWeekLimits] = useState<Record<number, { min: number; max: number }>>({});
+
+  useEffect(() => {
+    fetch("/api/available-weeks")
+      .then((r) => r.json())
+      .then((data) => {
+        setWeekLimits(data);
+        // Clamp endWeek to actual max of the current endYear
+        const maxEnd = data[2026]?.max ?? 53;
+        setEndWeek(maxEnd);
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (darkMode) {
@@ -587,22 +600,36 @@ export default function Dashboard() {
                   <select
                     aria-label="Année de début"
                     value={startYear}
-                    onChange={(e) => setStartYear(Number(e.target.value))}
+                    onChange={(e) => {
+                      const y = Number(e.target.value);
+                      setStartYear(y);
+                      const limits = weekLimits[y];
+                      if (limits) {
+                        setStartWeek(Math.max(limits.min, Math.min(startWeek, limits.max)));
+                      }
+                    }}
                     className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
                   >
-                    {[2020, 2021, 2022, 2023, 2024, 2025].map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
+                    {Object.keys(weekLimits).length > 0
+                      ? Object.keys(weekLimits).map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))
+                      : [2020, 2021, 2022, 2023, 2024, 2025, 2026].map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
                   </select>
                   <input
                     aria-label="Semaine de début"
                     type="number"
-                    min="1"
-                    max="53"
+                    min={weekLimits[startYear]?.min ?? 1}
+                    max={weekLimits[startYear]?.max ?? 53}
                     value={startWeek}
-                    onChange={(e) => setStartWeek(Number(e.target.value))}
+                    onChange={(e) => {
+                      const w = Number(e.target.value);
+                      const limits = weekLimits[startYear];
+                      const clamped = limits ? Math.max(limits.min, Math.min(w, limits.max)) : w;
+                      setStartWeek(clamped);
+                    }}
                     className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm w-16 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
                   />
                 </div>
@@ -616,22 +643,36 @@ export default function Dashboard() {
                   <select
                     aria-label="Année de fin"
                     value={endYear}
-                    onChange={(e) => setEndYear(Number(e.target.value))}
+                    onChange={(e) => {
+                      const y = Number(e.target.value);
+                      setEndYear(y);
+                      const limits = weekLimits[y];
+                      if (limits) {
+                        setEndWeek(Math.max(limits.min, Math.min(endWeek, limits.max)));
+                      }
+                    }}
                     className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
                   >
-                    {[2020, 2021, 2022, 2023, 2024, 2025].map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
+                    {Object.keys(weekLimits).length > 0
+                      ? Object.keys(weekLimits).map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))
+                      : [2020, 2021, 2022, 2023, 2024, 2025, 2026].map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
                   </select>
                   <input
                     aria-label="Semaine de fin"
                     type="number"
-                    min="1"
-                    max="53"
+                    min={weekLimits[endYear]?.min ?? 1}
+                    max={weekLimits[endYear]?.max ?? 53}
                     value={endWeek}
-                    onChange={(e) => setEndWeek(Number(e.target.value))}
+                    onChange={(e) => {
+                      const w = Number(e.target.value);
+                      const limits = weekLimits[endYear];
+                      const clamped = limits ? Math.max(limits.min, Math.min(w, limits.max)) : w;
+                      setEndWeek(clamped);
+                    }}
                     className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm w-16 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
                   />
                 </div>
