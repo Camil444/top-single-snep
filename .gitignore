@@ -33,3 +33,9 @@ song_cache_v2.json
 
 # Archives
 archive/
+
+# Claude context file (local only)
+CLAUDE.md
+
+# Sensitive documents
+*.pdf
