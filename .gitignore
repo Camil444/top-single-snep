@@ -34,6 +34,13 @@ song_cache_v2.json
 # Archives
 archive/
 
+# Docker (local dev only)
+docker-compose.yaml
+Dockerfile
+
+# Jupyter notebooks (local analysis only)
+*.ipynb
+
 # Claude context file (local only)
 CLAUDE.md
 
