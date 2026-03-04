@@ -1,0 +1,33 @@
+name: Weekly SNEP Chart Update
+
+on:
+  schedule:
+    # Every Tuesday at 10:00 UTC (charts published Monday evening)
+    - cron: '0 10 * * 2'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install psycopg2-binary requests beautifulsoup4 lyricsgenius python-dotenv
+
+      - name: Run update
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GENIUS_ACCESS_TOKEN: ${{ secrets.GENIUS_ACCESS_TOKEN }}
+        run: python update.py
