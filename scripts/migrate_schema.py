@@ -20,13 +20,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-DB_CONFIG = {
-    "dbname": os.getenv("POSTGRES_DB", "db"),
-    "user": os.getenv("POSTGRES_USER", "db_user"),
-    "password": os.getenv("POSTGRES_PASSWORD", "db_password"),
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": "5432"
-}
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://db_user:db_password@localhost:5432/db")
 
 CREATE_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS labels (
@@ -101,7 +95,7 @@ CREATE INDEX IF NOT EXISTS idx_songs_main_artist   ON songs(main_artist_id);
 
 
 def get_db_connection():
-    return psycopg2.connect(**DB_CONFIG)
+    return psycopg2.connect(DATABASE_URL)
 
 
 def create_schema(conn):

@@ -6,18 +6,12 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-DB_CONFIG = {
-    "dbname": os.getenv("POSTGRES_DB", "db"),
-    "user": os.getenv("POSTGRES_USER", "db_user"),
-    "password": os.getenv("POSTGRES_PASSWORD", "db_password"),
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": "5432"
-}
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://db_user:db_password@localhost:5432/db")
 
 
 def get_db_connection():
     try:
-        return psycopg2.connect(**DB_CONFIG)
+        return psycopg2.connect(DATABASE_URL)
     except Exception as e:
         logger.error(f"DB connection error: {e}")
         raise
