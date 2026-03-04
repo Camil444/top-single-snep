@@ -1067,7 +1067,7 @@ export default function Dashboard() {
                 Stack technique
               </h3>
               <div className="flex flex-wrap gap-2">
-                {["Python", "PostgreSQL", "Apache Airflow", "Next.js", "Docker"].map(
+                {["Python", "PostgreSQL", "Neon", "Next.js", "Vercel"].map(
                   (tech) => (
                     <span
                       key={tech}
