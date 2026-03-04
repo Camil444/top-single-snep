@@ -977,7 +977,7 @@ export default function Dashboard() {
       {/* About button — fixed bottom-right */}
       <button
         onClick={() => setAboutOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-[#171717] shadow-md text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-lg hover:scale-105 transition-all duration-200"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-[#171717] shadow-md text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
       >
         À propos
       </button>
