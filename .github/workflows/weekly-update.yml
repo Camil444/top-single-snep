@@ -24,7 +24,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install psycopg2-binary requests beautifulsoup4 lyricsgenius python-dotenv
+        run: pip install psycopg2-binary requests beautifulsoup4 lyricsgenius python-dotenv pandas numpy
 
       - name: Run update
         env:
