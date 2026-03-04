@@ -1024,9 +1024,8 @@ export default function Dashboard() {
                 artistes ont marqué la décennie ? Ce dashboard agrège les
                 classements hebdomadaires du{" "}
                 <strong>Top Singles SNEP</strong> depuis 2020 et les enrichit
-                avec les données de production issues de Genius — pour révéler,
-                derrière chaque hit, les producteurs et artistes qui façonnent
-                la musique française.
+                avec les données de production issues de Genius pour révéler
+                les producteurs et artistes qui façonnent la musique française.
               </p>
             </div>
 
