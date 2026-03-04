@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
-const GENIUS_ACCESS_TOKEN = process.env.GENIUS_ACCESS_TOKEN;
-
 export async function GET(request: Request) {
+  const GENIUS_ACCESS_TOKEN = process.env.GENIUS_ACCESS_TOKEN;
   const { searchParams } = new URL(request.url);
   const artist = searchParams.get("artist");
 
