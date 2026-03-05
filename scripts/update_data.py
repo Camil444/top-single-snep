@@ -16,6 +16,7 @@ import lyricsgenius
 import requests
 import json
 import os
+import re
 import time
 import logging
 from datetime import datetime, timedelta
@@ -65,6 +66,8 @@ logger = logging.getLogger(__name__)
 class OptimizedSongCache:
     """Smart cache to avoid redundant API requests"""
     
+    _normalize_re = re.compile(r'[^\w\s]')
+
     def __init__(self, cache_file=CACHE_FILE):
         self.cache_file = cache_file
         self.cache = self.load_cache()
@@ -91,9 +94,8 @@ class OptimizedSongCache:
     
     def get_key(self, title, artist):
         """Normalizes title and artist to create a unique key"""
-        import re
-        title_clean = re.sub(r'[^\w\s]', '', title.lower().strip())
-        artist_clean = re.sub(r'[^\w\s]', '', artist.lower().strip())
+        title_clean = self._normalize_re.sub('', title.lower().strip())
+        artist_clean = self._normalize_re.sub('', artist.lower().strip())
         return f"{title_clean}|{artist_clean}"
     
     def get(self, title, artist):
@@ -118,8 +120,10 @@ class OptimizedSongCache:
 
 class GeniusDataEnricher:
     """Music data enricher via Genius API"""
-    
+
     def __init__(self):
+        if not ACCESS_TOKEN:
+            raise ValueError("GENIUS_ACCESS_TOKEN is not set. Cannot enrich data without a valid token.")
         self.genius = lyricsgenius.Genius(ACCESS_TOKEN)
         self.genius.timeout = 20  # Increase timeout
         self.genius.retries = 3   # Add retries
@@ -264,10 +268,11 @@ class DataUpdater:
             
             # Enrichment (Bug fix: API call if missing from cache)
             processed = 0
-            for idx, row in entries_to_enrich.iterrows():
+            for row in entries_to_enrich.itertuples():
+                idx = row.Index
                 try:
                     # Call get_song_details which handles Cache + API
-                    song_data = self.enricher.get_song_details(row['titre'], row['artiste'])
+                    song_data = self.enricher.get_song_details(row.titre, row.artiste)
                     
                     if song_data:
                         for col, val in song_data.items():

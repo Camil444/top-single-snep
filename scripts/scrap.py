@@ -13,11 +13,7 @@ from urllib.parse import urljoin
 import logging
 from datetime import datetime
 import re
-import urllib3
 import json
-
-# Disable insecure SSL warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Logging configuration
 logging.basicConfig(
@@ -191,8 +187,12 @@ class SNEPScraper:
         self.base_url = "https://snepmusique.com/les-tops/le-top-de-la-semaine/top-albums/"
         self.delay = delay_between_requests
         self.session = requests.Session()
-        # Disable SSL verification to avoid local certificate errors
-        self.session.verify = False
+        # Use certifi certificates for proper SSL verification
+        try:
+            import certifi
+            self.session.verify = certifi.where()
+        except ImportError:
+            self.session.verify = True
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         })
@@ -260,14 +260,22 @@ class SNEPScraper:
             'annee': str(annee)
         }
         
-        try:
-            logger.info(f"Retrieving data: Year {annee}, Week {semaine}")
-            response = self.session.get(self.base_url, params=params, timeout=10)
-            response.raise_for_status()
-            return BeautifulSoup(response.content, 'html.parser')
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error retrieving page (Year {annee}, Week {semaine}): {e}")
-            return None
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                logger.info(f"Retrieving data: Year {annee}, Week {semaine} (attempt {attempt}/{max_retries})")
+                response = self.session.get(self.base_url, params=params, timeout=10)
+                response.raise_for_status()
+                return BeautifulSoup(response.content, 'html.parser')
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Attempt {attempt}/{max_retries} failed (Year {annee}, Week {semaine}): {e}")
+                if attempt < max_retries:
+                    wait = 2 ** attempt
+                    logger.info(f"Retrying in {wait}s...")
+                    time.sleep(wait)
+                else:
+                    logger.error(f"All {max_retries} attempts failed for Year {annee}, Week {semaine}")
+                    return None
     
     def extract_data_from_page(self, soup, semaine, annee):
         """

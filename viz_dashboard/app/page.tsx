@@ -341,10 +341,9 @@ function Podium({
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<
-    "producer" | "artist" | "genre" | "editeur"
+    "producer" | "artist" | "editeur"
   >("producer");
   const [stats, setStats] = useState<Stat[]>([]);
-  const [genres, setGenres] = useState<{ genre: string; count: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
@@ -413,26 +412,8 @@ export default function Dashboard() {
   }, [darkMode]);
 
   useEffect(() => {
-    if (activeTab === "genre") {
-      fetchGenres();
-    } else {
-      fetchStats();
-    }
+    fetchStats();
   }, [activeTab, startYear, startWeek, endYear, endWeek, rankLimit]);
-
-  const fetchGenres = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/genres");
-      if (!res.ok) throw new Error("Failed to fetch genres");
-      const data = await res.json();
-      setGenres(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchStats = async () => {
     setLoading(true);
@@ -720,48 +701,7 @@ export default function Dashboard() {
         </div>
 
         {/* Content */}
-        {activeTab === "genre" ? (
-          <div className="bg-white dark:bg-[#171717] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-green-500" />
-              Répartition par Genre Musical
-            </h2>
-            <div className="space-y-4">
-              {loading
-                ? [...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-8 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"
-                    />
-                  ))
-                : genres.map((g, i) => (
-                    <div key={i} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {g.genre}
-                        </span>
-                        <span className="text-gray-500 dark:text-gray-400">
-                          {g.count} titres
-                        </span>
-                      </div>
-                      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-green-500 rounded-full"
-                          style={{
-                            width: `${
-                              (g.count /
-                                Math.max(...genres.map((x) => x.count))) *
-                              100
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Top 10 Card */}
             <div className="lg:col-span-2 bg-white dark:bg-[#171717] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
               <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
@@ -971,7 +911,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        )}
       </div>
 
       {/* About button — fixed bottom-right */}

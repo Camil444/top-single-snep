@@ -4,6 +4,7 @@ import os
 from scrap import SNEPScraper
 from update_data import GeniusDataEnricher
 from insert_record import insert_record, get_last_scraped_week
+from send_recap import send_recap_email
 
 # Logging configuration
 logging.basicConfig(
@@ -47,67 +48,74 @@ def update_database():
     1. Determine current week.
     2. Check last week in database.
     3. Scrape, enrich and insert missing weeks.
+    4. Send recap email.
     """
+    start_time = datetime.datetime.now()
+    report = {
+        "year": 0,
+        "weeks_processed": [],
+        "total_entries": 0,
+        "errors": [],
+        "start_time": start_time,
+        "end_time": start_time,
+        "already_up_to_date": False,
+    }
+
     current_date = datetime.datetime.now()
     current_year = int(os.getenv("TARGET_YEAR", current_date.year))
-    # Si TARGET_WEEK est défini, on l'utilise, sinon on prend la semaine actuelle
     target_week_env = os.getenv("TARGET_WEEK")
     if target_week_env:
         current_week = int(target_week_env)
     else:
         current_week = current_date.isocalendar()[1]
-    
+
+    report["year"] = current_year
     logger.info(f"Démarrage de la mise à jour. Année cible: {current_year}, Semaine cible: {current_week}")
-    
+
     # Initialiser l'enrichisseur (charge le cache)
     enricher = GeniusDataEnricher()
-    
+
     # Initialiser le scraper
     scraper = SNEPScraper()
-    
-    # On peut vouloir remonter un peu en arrière si on est en début d'année pour finir l'année précédente
-    # Pour simplifier, on regarde l'année courante. 
-    # Si on est semaine 1, on pourrait vouloir vérifier l'année d'avant, mais restons simple pour l'instant.
-    
+
     last_db_week = get_last_scraped_week(current_year)
     logger.info(f"Dernière semaine en base pour {current_year}: {last_db_week}")
-    
+
     if last_db_week >= current_week:
         logger.info("La base de données est à jour.")
+        report["already_up_to_date"] = True
+        report["end_time"] = datetime.datetime.now()
+        send_recap_email(report)
         return
 
-    # Boucle sur les semaines manquantes
-    # On commence à last_db_week + 1
-    # On va jusqu'à current_week inclus (ou exclus selon la dispo des données SNEP, mais scrape_week gère les erreurs)
-    
     for week in range(last_db_week + 1, current_week + 1):
         logger.info(f"Traitement de la semaine {week}/{current_year}...")
-        
-        # 1. Scraping
+
         try:
             raw_data = scraper.scrape_week(current_year, week)
             if not raw_data:
-                logger.warning(f"Aucune donnée récupérée pour la semaine {week}. Arrêt ou passage à la suivante.")
+                logger.warning(f"Aucune donnée récupérée pour la semaine {week}.")
+                report["errors"].append(f"Semaine {week}: aucune donnée récupérée")
                 continue
-                
+
             logger.info(f"Récupéré {len(raw_data)} entrées depuis SNEP.")
-            
-            # 2. Enrichissement
+
             enriched_data = enrich_data_list(raw_data, enricher)
-            
-            # 3. Insertion
             insert_record(enriched_data, current_year)
-            
-            # Sauvegarder le cache Genius périodiquement
             enricher.cache.save_cache()
-            
+
+            report["weeks_processed"].append(week)
+            report["total_entries"] += len(enriched_data)
+
         except Exception as e:
+            error_msg = f"Semaine {week}: {e}"
             logger.error(f"Erreur critique lors du traitement de la semaine {week}: {e}")
-            # On continue pour essayer les autres semaines ? Ou on break ?
-            # Mieux vaut continuer au cas où c'est juste une semaine qui bug.
+            report["errors"].append(error_msg)
             continue
 
+    report["end_time"] = datetime.datetime.now()
     logger.info("Mise à jour terminée.")
+    send_recap_email(report)
 
 if __name__ == "__main__":
     update_database()

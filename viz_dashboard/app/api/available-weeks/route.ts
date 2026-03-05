@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
-import { Client } from "pg";
+import pool from "@/lib/db";
+
+export const revalidate = 86400; // Cache for 1 day (changes only when new weeks added)
 
 export async function GET() {
-  const client = new Client({
-    connectionString:
-      process.env.DATABASE_URL || "postgresql://db_user:db_password@localhost:5432/db",
-    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
-  });
-
   try {
-    await client.connect();
-    const result = await client.query(`
+    const result = await pool.query(`
       SELECT annee, MIN(semaine) AS min_week, MAX(semaine) AS max_week
-      FROM public.chart_entries
+      FROM chart_entries
       GROUP BY annee
       ORDER BY annee
     `);
@@ -29,7 +24,5 @@ export async function GET() {
   } catch (error) {
     console.error("Database error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  } finally {
-    await client.end();
   }
 }

@@ -91,6 +91,11 @@ CREATE INDEX IF NOT EXISTS idx_producers_name      ON producers(name);
 CREATE INDEX IF NOT EXISTS idx_writers_name        ON writers(name);
 CREATE INDEX IF NOT EXISTS idx_labels_name         ON labels(name);
 CREATE INDEX IF NOT EXISTS idx_songs_main_artist   ON songs(main_artist_id);
+CREATE INDEX IF NOT EXISTS idx_songs_label_id      ON songs(label_id);
+CREATE INDEX IF NOT EXISTS idx_song_artists_song   ON song_artists(song_id);
+CREATE INDEX IF NOT EXISTS idx_song_producers_song ON song_producers(song_id);
+CREATE INDEX IF NOT EXISTS idx_song_writers_song   ON song_writers(song_id);
+CREATE INDEX IF NOT EXISTS idx_chart_song_annee_sem ON chart_entries(song_id, annee, semaine);
 """
 
 

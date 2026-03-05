@@ -72,6 +72,18 @@ CREATE INDEX IF NOT EXISTS idx_producers_name      ON producers(name);
 CREATE INDEX IF NOT EXISTS idx_writers_name        ON writers(name);
 CREATE INDEX IF NOT EXISTS idx_labels_name         ON labels(name);
 CREATE INDEX IF NOT EXISTS idx_songs_main_artist   ON songs(main_artist_id);
+CREATE INDEX IF NOT EXISTS idx_songs_label_id      ON songs(label_id);
+CREATE INDEX IF NOT EXISTS idx_song_artists_song   ON song_artists(song_id);
+CREATE INDEX IF NOT EXISTS idx_song_producers_song ON song_producers(song_id);
+CREATE INDEX IF NOT EXISTS idx_song_writers_song   ON song_writers(song_id);
+CREATE INDEX IF NOT EXISTS idx_chart_song_annee_sem ON chart_entries(song_id, annee, semaine);
+"""
+
+TRIGRAM_INDEX_SQL = """
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS idx_artists_name_trgm ON artists USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_producers_name_trgm ON producers USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_labels_name_trgm ON labels USING gin (name gin_trgm_ops);
 """
 
 
@@ -89,6 +101,10 @@ def create_schema():
     cur = conn.cursor()
     try:
         cur.execute(CREATE_SCHEMA_SQL)
+        try:
+            cur.execute(TRIGRAM_INDEX_SQL)
+        except Exception:
+            logger.debug("pg_trgm extension not available, skipping trigram indexes")
         conn.commit()
         logger.info("Schema verified/created.")
     except Exception as e:
@@ -190,10 +206,9 @@ def _insert_single_row(conn, item):
             (song_id, item['annee'], item['semaine'], item['classement'])
         )
 
-        conn.commit()
     except Exception as e:
         conn.rollback()
-        logger.error(f"Error inserting row (titre={item.get('titre')}, semaine={item.get('semaine')}): {e}")
+        raise e
     finally:
         cur.close()
 
@@ -209,10 +224,22 @@ def insert_record(data_list, year):
         return
 
     conn = get_db_connection()
+    batch_size = 500
+    inserted = 0
+    errors = 0
     try:
-        for item in data_list:
-            _insert_single_row(conn, item)
-        logger.info(f"Processed {len(data_list)} records for year {year}.")
+        for i, item in enumerate(data_list):
+            try:
+                _insert_single_row(conn, item)
+                inserted += 1
+            except Exception as e:
+                errors += 1
+                logger.error(f"Error inserting row (titre={item.get('titre')}, semaine={item.get('semaine')}): {e}")
+            if (i + 1) % batch_size == 0:
+                conn.commit()
+                logger.info(f"  Committed batch {(i + 1) // batch_size} ({i + 1}/{len(data_list)} rows)")
+        conn.commit()
+        logger.info(f"Processed {inserted} records for year {year} ({errors} errors).")
     finally:
         conn.close()
 
@@ -227,24 +254,36 @@ def load_csvs_to_db():
 
     create_schema()
 
-    for csv_file in csv_files:
-        try:
-            year = int(csv_file.stem.split('_')[-1])
-            logger.info(f"Loading {csv_file.name} (year {year})...")
-            df = pd.read_csv(csv_file)
-            df = df.where(pd.notnull(df), None)
-            data_list = df.to_dict('records')
-
-            conn = get_db_connection()
+    conn = get_db_connection()
+    batch_size = 500
+    try:
+        for csv_file in csv_files:
             try:
-                for item in data_list:
-                    _insert_single_row(conn, item)
-                logger.info(f"  Loaded {len(data_list)} rows from {csv_file.name}")
-            finally:
-                conn.close()
+                year = int(csv_file.stem.split('_')[-1])
+                logger.info(f"Loading {csv_file.name} (year {year})...")
+                df = pd.read_csv(csv_file)
+                df = df.where(pd.notnull(df), None)
+                data_list = df.to_dict('records')
 
-        except Exception as e:
-            logger.error(f"Error loading {csv_file.name}: {e}")
+                inserted = 0
+                errors = 0
+                for i, item in enumerate(data_list):
+                    try:
+                        _insert_single_row(conn, item)
+                        inserted += 1
+                    except Exception as e:
+                        errors += 1
+                        logger.error(f"Error inserting row: {e}")
+                    if (i + 1) % batch_size == 0:
+                        conn.commit()
+                conn.commit()
+                logger.info(f"  Loaded {inserted} rows from {csv_file.name} ({errors} errors)")
+
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"Error loading {csv_file.name}: {e}")
+    finally:
+        conn.close()
 
 
 def get_last_scraped_week(year):
