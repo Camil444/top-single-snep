@@ -16,31 +16,29 @@ logger = logging.getLogger(__name__)
 def enrich_data_list(data_list, enricher):
     """
     Enriches a list of dictionaries (SNEP data) with Genius data.
+    Returns (data_list, genius_error_count).
     """
     enriched_count = 0
+    genius_errors = 0
     total = len(data_list)
-    
+
     for i, item in enumerate(data_list, 1):
         try:
-            # Progress log every 10 items
             if i % 10 == 0:
                 logger.info(f"Enrichissement en cours... {i}/{total}")
 
-            # Retrieve details via Genius (uses GeniusDataEnricher internal cache)
             song_details = enricher.get_song_details(item['titre'], item['artiste'])
-            
-            # Merge data
+
             if song_details:
                 item.update(song_details)
                 enriched_count += 1
-                
+
         except Exception as e:
-            # In case of error (timeout, etc.), we log but DO NOT BLOCK the process.
-            # The item will be inserted without Genius data (NULL in database), which is better than nothing.
-            logger.error(f"Erreur lors de l'enrichissement de {item.get('titre', '?')} - {item.get('artiste', '?')}: {e}")
-            
-    logger.info(f"Enrichi {enriched_count}/{len(data_list)} entrées.")
-    return data_list
+            genius_errors += 1
+            logger.warning(f"Genius indisponible pour {item.get('titre', '?')} - {item.get('artiste', '?')}: {e}")
+
+    logger.info(f"Enrichi {enriched_count}/{total} entrees ({genius_errors} echecs Genius).")
+    return data_list, genius_errors
 
 def update_database():
     """
@@ -56,6 +54,8 @@ def update_database():
         "weeks_processed": [],
         "total_entries": 0,
         "errors": [],
+        "warnings": [],
+        "genius_errors": 0,
         "start_time": start_time,
         "end_time": start_time,
         "already_up_to_date": False,
@@ -95,17 +95,18 @@ def update_database():
             raw_data = scraper.scrape_week(current_year, week)
             if not raw_data:
                 logger.warning(f"Aucune donnée récupérée pour la semaine {week}.")
-                report["errors"].append(f"Semaine {week}: aucune donnée récupérée")
+                report["warnings"].append(f"Semaine {week}: pas encore disponible sur le SNEP")
                 continue
 
             logger.info(f"Récupéré {len(raw_data)} entrées depuis SNEP.")
 
-            enriched_data = enrich_data_list(raw_data, enricher)
+            enriched_data, genius_errs = enrich_data_list(raw_data, enricher)
             insert_record(enriched_data, current_year)
             enricher.cache.save_cache()
 
             report["weeks_processed"].append(week)
             report["total_entries"] += len(enriched_data)
+            report["genius_errors"] += genius_errs
 
         except Exception as e:
             error_msg = f"Semaine {week}: {e}"

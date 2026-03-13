@@ -24,7 +24,9 @@ def send_recap_email(report: dict):
         - year: int
         - weeks_processed: list[int]
         - total_entries: int
-        - errors: list[str]
+        - errors: list[str]          (critical: insertion failures)
+        - warnings: list[str]        (non-critical: Genius API, week not available)
+        - genius_errors: int          (count of Genius API failures)
         - start_time: datetime
         - end_time: datetime
         - already_up_to_date: bool
@@ -35,34 +37,57 @@ def send_recap_email(report: dict):
 
     now = report["end_time"]
     duration = report["end_time"] - report["start_time"]
-    has_errors = len(report["errors"]) > 0
-    status = "ERREURS" if has_errors else "OK"
+    has_errors = len(report.get("errors", [])) > 0
+    genius_errors = report.get("genius_errors", 0)
+    warnings = report.get("warnings", [])
+
+    # Status: only ERREUR if critical errors occurred
+    if has_errors:
+        status = "ERREUR"
+    elif report.get("already_up_to_date"):
+        status = "Deja a jour"
+    else:
+        status = "OK"
 
     subject = f"SNEP Update {now.strftime('%d/%m/%Y')} — {status}"
 
-    # Build body
     lines = []
     lines.append(f"Mise a jour SNEP — {now.strftime('%A %d %B %Y a %H:%M')}")
     lines.append(f"Duree : {duration.total_seconds():.0f}s")
     lines.append("")
 
-    if report["already_up_to_date"]:
+    if report.get("already_up_to_date"):
         lines.append("La base de donnees etait deja a jour, aucune insertion.")
     else:
         lines.append(f"Annee : {report['year']}")
-        lines.append(f"Semaines traitees : {report['weeks_processed']}")
-        lines.append(f"Nombre d'entrees inserees : {report['total_entries']}")
+        weeks = report.get("weeks_processed", [])
+        if weeks:
+            lines.append(f"Semaines inserees : {weeks}")
+            lines.append(f"Nombre d'entrees inserees : {report.get('total_entries', 0)}")
+        else:
+            lines.append("Aucune semaine inseree.")
 
+    # Genius enrichment summary
+    if genius_errors > 0:
+        lines.append("")
+        lines.append(f"Enrichissement Genius : {genius_errors} chansons non enrichies (API indisponible)")
+        lines.append("  -> Les classements sont bien inseres, seuls les metadata (producteurs, writers) manquent.")
+
+    # Warnings (non-critical)
+    if warnings:
+        lines.append("")
+        lines.append(f"Infos ({len(warnings)}) :")
+        for w in warnings[:10]:
+            lines.append(f"  - {w}")
+
+    # Critical errors
     lines.append("")
-
     if has_errors:
-        lines.append(f"ERREURS ({len(report['errors'])}) :")
+        lines.append(f"ERREURS CRITIQUES ({len(report['errors'])}) :")
         for err in report["errors"][:20]:
             lines.append(f"  - {err}")
-        if len(report["errors"]) > 20:
-            lines.append(f"  ... et {len(report['errors']) - 20} autres erreurs")
     else:
-        lines.append("Aucune erreur.")
+        lines.append("Aucune erreur critique.")
 
     body = "\n".join(lines)
 
